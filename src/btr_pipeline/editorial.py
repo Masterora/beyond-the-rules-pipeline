@@ -26,7 +26,7 @@ DISCOVERY_PROMPT = """
 可靠来源，其中至少 2 个必须是一手或权威材料（政府、法院、监管机构、当事组织档案、
 学术论文或原始数据库）。优先选择拥有大量公共领域或 CC 授权历史影像的故事。
 
-叙事总字数应为 2600–3600 个汉字，拆成 12–16 个场景。每个场景都必须列出实际支持该段
+叙事总字数应为 2200–3200 个汉字，拆成 12–16 个场景。每个场景都必须列出实际支持该段
 陈述的 source URL，visual_query 用具体英文描述可检索的真实地点、人物、物件或档案，
 不要用抽象词。前 30 秒要制造信息差、明确赌注并承诺稍后兑现，但不能泄露全部答案。
 每 45–75 秒引入新的证据、逆转或未解问题；结尾回扣开场并提供有用判断框架。
@@ -62,7 +62,7 @@ RETENTION_PROMPT = """
 3. 每 45–75 秒设置一个有事实依据的新问题或逆转，避免廉价悬念；
 4. 删掉总结式重复、套话和 AI 常见排比；
 5. 标题和缩略图文案彼此补全，并在正文中兑现；
-6. 保持 2600–3600 个汉字和 12–16 个场景。
+6. 保持 2200–3200 个汉字和 12–16 个场景；宁可紧凑，不用解释式填充凑字数。
 输出原结构的完整 JSON，不增加无来源事实。
 """.strip()
 
@@ -147,6 +147,7 @@ class EditorialPipeline:
 
         story = fact_story
         fact_urls = {source.url for source in fact_story.sources}
+        retention_correction = ""
         for retention_attempt in range(1, 3):
             print(
                 f"[editorial 4/4] editing for human cadence and retention, "
@@ -156,7 +157,10 @@ class EditorialPipeline:
             final_data = self._unwrap_story_payload(
                 self.client.chat_json(
                     system=f"{CHANNEL_BRIEF}\n\n{RETENTION_PROMPT}",
-                    user=json.dumps(fact_data, ensure_ascii=False),
+                    user=(
+                        json.dumps(fact_data, ensure_ascii=False)
+                        + retention_correction
+                    ),
                     temperature=0.35 if retention_attempt == 1 else 0.15,
                 )
             )
@@ -174,6 +178,12 @@ class EditorialPipeline:
                 "[editorial 4/4] rejected incomplete retention edit: "
                 + "; ".join(errors),
                 flush=True,
+            )
+            retention_correction = (
+                "\n\n上一次留存编辑未通过硬门槛："
+                + "; ".join(errors)
+                + "。请基于原始事实版重新编辑，完整保留所有字段、场景和来源，"
+                "并把中文旁白控制在2200–3200字。"
             )
         else:
             print(

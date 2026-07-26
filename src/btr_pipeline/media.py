@@ -120,17 +120,28 @@ class VideoRenderer:
         assets: list[VisualAsset],
         audio_paths: list[Path],
     ) -> dict[str, Path]:
-        if len(story.scenes) != len(assets) or len(assets) != len(audio_paths):
-            raise RuntimeError("scene, asset, and narration counts do not match")
+        if len(story.scenes) != len(audio_paths):
+            raise RuntimeError("scene and narration counts do not match")
+        assets_by_scene: list[list[VisualAsset]] = [
+            [] for _ in range(len(story.scenes))
+        ]
+        for asset in assets:
+            if not 0 <= asset.scene_index < len(story.scenes):
+                raise RuntimeError(f"asset has invalid scene index: {asset.scene_index}")
+            assets_by_scene[asset.scene_index].append(asset)
+        if any(not scene_assets for scene_assets in assets_by_scene):
+            raise RuntimeError("every scene must have at least one visual asset")
         segments: list[Segment] = []
-        for index, (asset, audio) in enumerate(zip(assets, audio_paths, strict=True)):
+        for index, (scene_assets, audio) in enumerate(
+            zip(assets_by_scene, audio_paths, strict=True)
+        ):
             print(
-                f"[render {index + 1}/{len(assets)}] encoding documentary scene",
+                f"[render {index + 1}/{len(story.scenes)}] encoding documentary scene",
                 flush=True,
             )
             duration = ffprobe_duration(audio) + 0.5
             video = self.segment_dir / f"{index + 1:02d}.mp4"
-            self._render_segment(asset, audio, video, duration, index)
+            self._render_segment(scene_assets, audio, video, duration, index)
             segments.append(Segment(index, audio, video, duration))
 
         clean = self.run_dir / "video-clean.mp4"
@@ -152,50 +163,76 @@ class VideoRenderer:
 
     def _render_segment(
         self,
-        asset: VisualAsset,
+        assets: list[VisualAsset],
         audio: Path,
         target: Path,
         duration: float,
         index: int,
     ) -> None:
-        common_video = (
-            "scale=2160:1215:force_original_aspect_ratio=increase,"
-            "crop=2160:1215,scale=1920:1080,"
-            "eq=contrast=1.05:saturation=0.90:brightness=-0.015,"
-            "vignette=PI/5,fps=30,format=yuv420p"
-        )
-        if asset.media_type == "video":
-            inputs = ["-stream_loop", "-1", "-i", str(asset.local_path)]
-            video_filter = common_video
-        else:
-            inputs = ["-loop", "1", "-i", str(asset.local_path)]
-            pan = "sin(on/65)*10" if index % 2 else "cos(on/70)*10"
-            video_filter = (
-                "scale=2160:1215:force_original_aspect_ratio=increase,"
-                "crop=2160:1215,"
-                f"zoompan=z='min(zoom+0.00035,1.09)':x='iw/2-(iw/zoom/2)+{pan}':"
-                "y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30,"
-                "eq=contrast=1.05:saturation=0.90:brightness=-0.015,"
-                "vignette=PI/5,format=yuv420p"
+        inputs: list[str] = []
+        visual_filters: list[str] = []
+        clip_duration = duration / len(assets)
+        for visual_index, asset in enumerate(assets):
+            if asset.media_type == "video":
+                inputs.extend(["-stream_loop", "-1", "-i", str(asset.local_path)])
+                video_filter = (
+                    "scale=2160:1215:force_original_aspect_ratio=increase,"
+                    "crop=2160:1215,scale=1920:1080,"
+                    "eq=contrast=1.05:saturation=0.90:brightness=-0.015,"
+                    "vignette=PI/5,fps=30,format=yuv420p,setsar=1"
+                )
+            else:
+                inputs.extend(["-loop", "1", "-i", str(asset.local_path)])
+                pan = (
+                    "sin(on/65)*10"
+                    if (index + visual_index) % 2
+                    else "cos(on/70)*10"
+                )
+                video_filter = (
+                    "scale=2160:1215:force_original_aspect_ratio=increase,"
+                    "crop=2160:1215,"
+                    f"zoompan=z='min(zoom+0.00035,1.09)':"
+                    f"x='iw/2-(iw/zoom/2)+{pan}':"
+                    "y='ih/2-(ih/zoom/2)':s=1920x1080:fps=30,"
+                    "eq=contrast=1.05:saturation=0.90:brightness=-0.015,"
+                    "vignette=PI/5,format=yuv420p,setsar=1"
+                )
+            visual_filters.append(
+                f"[{visual_index}:v]{video_filter},"
+                f"trim=duration={clip_duration:.3f},setpts=PTS-STARTPTS[v{visual_index}]"
             )
-        run_command(
+        audio_index = len(assets)
+        noise_index = audio_index + 1
+        inputs.extend(
             [
-                "ffmpeg",
-                "-y",
-                *inputs,
                 "-i",
                 str(audio),
                 "-f",
                 "lavfi",
                 "-i",
                 "anoisesrc=color=pink:amplitude=0.0015:sample_rate=48000",
-                "-filter_complex",
+            ]
+        )
+        concat_inputs = "".join(f"[v{i}]" for i in range(len(assets)))
+        filter_complex = ";".join(
+            [
+                *visual_filters,
+                f"{concat_inputs}concat=n={len(assets)}:v=1:a=0[v]",
+                f"[{audio_index}:a]volume=1.0[voice]",
+                f"[{noise_index}:a]lowpass=f=420,highpass=f=45,volume=0.25[room]",
                 (
-                    f"[0:v]{video_filter}[v];"
-                    "[1:a]volume=1.0[voice];[2:a]lowpass=f=420,highpass=f=45,"
-                    "volume=0.25[room];[voice][room]amix=inputs=2:duration=first:"
+                    "[voice][room]amix=inputs=2:duration=first:"
                     "dropout_transition=0,loudnorm=I=-16:LRA=9:TP=-1.5[a]"
                 ),
+            ]
+        )
+        run_command(
+            [
+                "ffmpeg",
+                "-y",
+                *inputs,
+                "-filter_complex",
+                filter_complex,
                 "-map",
                 "[v]",
                 "-map",

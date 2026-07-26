@@ -93,8 +93,8 @@ class Story:
         if len(self.scenes) < 10:
             errors.append("at least 10 scenes are required")
         narration_length = sum(len(scene.narration) for scene in self.scenes)
-        if not 2400 <= narration_length <= 4200:
-            errors.append("total narration must be 2400-4200 Chinese characters")
+        if not 2000 <= narration_length <= 4200:
+            errors.append("total narration must be 2000-4200 Chinese characters")
         if len(self.sources) < 3:
             errors.append("at least 3 sources are required")
         domains = {source.publisher.lower().strip() for source in self.sources}

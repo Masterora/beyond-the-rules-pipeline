@@ -36,11 +36,17 @@ class QualityGate:
         errors.extend(f"invalid asset license: {url}" for url in rights_failures)
         unique_assets = len({asset.file_url for asset in assets})
         checks["unique_visuals"] = unique_assets
-        if unique_assets != len(assets):
-            errors.append("visual assets are duplicated")
+        duplicate_cuts = len(assets) - unique_assets
+        checks["reframed_duplicate_cuts"] = duplicate_cuts
         video_count = sum(asset.media_type == "video" for asset in assets)
         checks["motion_clip_count"] = video_count
-        required_motion = max(2, len(assets) // 4)
+        scene_count = len({asset.scene_index for asset in assets})
+        checks["visuals_per_scene"] = round(len(assets) / max(1, scene_count), 2)
+        if len(assets) < scene_count * 2:
+            errors.append("fewer than two visual cuts per scene")
+        if duplicate_cuts > max(1, scene_count // 10):
+            errors.append("too many repeated source assets")
+        required_motion = max(2, scene_count // 4)
         if video_count < required_motion:
             errors.append(
                 f"not enough real motion clips: {video_count}, required {required_motion}"

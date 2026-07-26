@@ -44,10 +44,13 @@ class YouTubeUploader:
         if public_upload_enabled:
             status["publishAt"] = publish_at.isoformat().replace("+00:00", "Z")
 
+        description = self._description(story, assets)
+        if len(description) > 5000:
+            raise RuntimeError("complete source and CC BY attribution exceeds 5000 characters")
         metadata = {
             "snippet": {
                 "title": story.title[:100],
-                "description": self._description(story, assets)[:5000],
+                "description": description,
                 "tags": story.tags[:30],
                 "categoryId": "27",
                 "defaultLanguage": "zh-CN",
@@ -171,22 +174,27 @@ class YouTubeUploader:
 
     @staticmethod
     def _description(story: Story, assets: list[VisualAsset]) -> str:
-        lines = [story.description.strip(), "", "资料来源："]
+        lines = [
+            story.description.strip(),
+            "",
+            "制作说明：旁白使用合成语音；画面来自逐项核验许可的真实档案或素材。",
+            "本片不使用盗版影视、新闻台片段或未授权社交媒体素材。",
+            "",
+            "资料来源：",
+        ]
         for source in story.sources:
             lines.append(f"• {source.title} — {source.url}")
-        lines.extend(["", "画面授权与署名："])
+        lines.extend(["", "CC BY画面署名："])
+        attributed_urls: set[str] = set()
         for asset in assets:
+            if asset.source_url in attributed_urls:
+                continue
+            attributed_urls.add(asset.source_url)
+            if "cc by" not in asset.license_name.lower():
+                continue
             lines.append(
                 f"• {asset.title} / {asset.creator} / {asset.license_name} / "
                 f"{asset.source_url}"
             )
-        lines.extend(
-            [
-                "",
-                "制作说明：旁白使用合成语音；画面来自逐项核验许可的档案或素材。",
-                "本片不使用盗版影视、新闻台片段或未授权社交媒体素材。",
-                "",
-                "#规则之外 #纪录片 #真实故事",
-            ]
-        )
+        lines.extend(["", "#规则之外 #纪录片 #真实故事"])
         return "\n".join(lines)
