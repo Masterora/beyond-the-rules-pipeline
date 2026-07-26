@@ -62,6 +62,11 @@ jobs:
       - name: Run policy and unit tests
         run: pytest
 
+      - name: Verify narration provider before media collection
+        run: |
+          python -c 'from btr_pipeline.config import Settings; from btr_pipeline.openrouter import OpenRouterClient; s=Settings.from_env(); OpenRouterClient(s.openrouter_api_key, s.editorial_model).speech("规则之外，云端配音链路正常。", model=s.tts_model, voice=s.tts_voice, output_path="/tmp/btr-voice-probe.mp3")'
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 /tmp/btr-voice-probe.mp3
+
       - name: Restore recent-topic history
         id: topic-cache
         uses: actions/cache/restore@v4
