@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -167,9 +168,6 @@ class EditorialPipeline:
             if len(candidate.scenes) != len(fact_story.scenes):
                 errors.append("retention edit changed the verified scene count")
             if not errors:
-                source_errors = self._verify_sources(candidate)
-                errors.extend(source_errors)
-            if not errors:
                 story = candidate
                 break
             print(
@@ -197,12 +195,10 @@ class EditorialPipeline:
 
     @staticmethod
     def _verify_sources(story: Story) -> list[str]:
-        errors: list[str] = []
-        for source in story.sources:
+        def verify(source) -> str | None:
             parsed = urlparse(source.url)
             if parsed.scheme != "https" or not parsed.netloc:
-                errors.append(f"invalid source URL: {source.url}")
-                continue
+                return f"invalid source URL: {source.url}"
             try:
                 response = requests.get(
                     source.url,
@@ -211,12 +207,17 @@ class EditorialPipeline:
                     headers={"User-Agent": "BeyondTheRulesResearch/1.0"},
                     stream=True,
                 )
-                if response.status_code in {404, 410, 451} or response.status_code >= 500:
-                    errors.append(f"source returned HTTP {response.status_code}: {source.url}")
+                status_code = response.status_code
                 response.close()
+                if status_code in {404, 410, 451} or status_code >= 500:
+                    return f"source returned HTTP {status_code}: {source.url}"
             except requests.RequestException as exc:
-                errors.append(f"source unavailable: {source.url} ({exc.__class__.__name__})")
-        return errors
+                return f"source unavailable: {source.url} ({exc.__class__.__name__})"
+            return None
+
+        with ThreadPoolExecutor(max_workers=min(8, max(1, len(story.sources)))) as pool:
+            results = list(pool.map(verify, story.sources))
+        return [error for error in results if error]
 
     @staticmethod
     def _write_json(path: Path, data: object) -> None:
