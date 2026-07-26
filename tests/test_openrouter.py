@@ -9,6 +9,8 @@ class FakeResponse:
         self.text = json.dumps(payload)
         self.content = self.text.encode()
         self.headers = {"content-type": "application/json"}
+        self.status_code = 200
+        self.ok = True
 
     def raise_for_status(self):
         return None
@@ -70,3 +72,32 @@ def test_parse_api_response_rejects_unrequested_stream():
         assert "streaming" in str(exc)
     else:
         raise AssertionError("unrequested streaming response must be rejected")
+
+
+def test_qwen_speech_omits_openai_only_speed(monkeypatch, tmp_path):
+    captured = {}
+
+    class AudioResponse:
+        def __init__(self):
+            self.ok = True
+            self.status_code = 200
+            self.text = ""
+            self.content = b"audio"
+            self.headers = {"content-type": "audio/mpeg"}
+
+    def fake_post(*args, **kwargs):
+        captured.update(kwargs["json"])
+        return AudioResponse()
+
+    monkeypatch.setattr("requests.post", fake_post)
+    target = tmp_path / "voice.mp3"
+    OpenRouterClient("test", "test/model").speech(
+        "测试",
+        model="qwen/qwen-audio-3.0-tts-plus",
+        voice="longanlingxin",
+        output_path=str(target),
+    )
+
+    assert "speed" not in captured
+    assert captured["response_format"] == "mp3"
+    assert target.read_bytes() == b"audio"

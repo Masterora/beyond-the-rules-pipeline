@@ -125,19 +125,34 @@ class OpenRouterClient:
         voice: str,
         output_path: str,
     ) -> None:
+        # Qwen's OpenRouter adapter accepts the common speech fields but rejects
+        # OpenAI-only delivery controls such as ``speed`` with HTTP 400.  Pace is
+        # shaped by punctuation and by the post-processing chain instead.
+        body: dict[str, Any] = {
+            "model": model,
+            "input": text,
+            "voice": voice,
+            "response_format": "mp3",
+        }
         response = requests.post(
             f"{self.base_url}/audio/speech",
             headers=self.headers,
-            json={
-                "model": model,
-                "input": text,
-                "voice": voice,
-                "response_format": "mp3",
-                "speed": 0.96,
-            },
+            json=body,
             timeout=self.timeout,
         )
-        response.raise_for_status()
+        if not response.ok:
+            # The response contains no credentials or source text, but does
+            # contain the provider's actionable validation message.
+            detail = response.text[:1000].replace("\n", " ")
+            raise RuntimeError(
+                f"OpenRouter speech request failed ({response.status_code}): {detail}"
+            )
+        content_type = response.headers.get("content-type", "").lower()
+        if "audio" not in content_type:
+            raise RuntimeError(
+                "OpenRouter speech response was not audio: "
+                f"{content_type or 'missing content-type'}"
+            )
         with open(output_path, "wb") as handle:
             handle.write(response.content)
 
