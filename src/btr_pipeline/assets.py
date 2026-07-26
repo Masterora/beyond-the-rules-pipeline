@@ -33,15 +33,30 @@ class CommonsAssetProvider:
         asset_dir.mkdir(parents=True, exist_ok=True)
         assets: list[VisualAsset] = []
         used_urls: set[str] = set()
+        required_motion = max(2, len(scenes) // 4)
+        motion_count = 0
         for index, scene in enumerate(scenes):
             print(
                 f"[visuals {index + 1}/{len(scenes)}] finding licensed archival media",
                 flush=True,
             )
-            prefer_video = index % 3 == 0
-            candidates = self.search(scene.visual_query, prefer_video=prefer_video)
-            if not candidates and prefer_video:
-                candidates = self.search(scene.visual_query, prefer_video=False)
+            prefer_video = motion_count < required_motion
+            candidate_groups: list[list[dict[str, str]]] = []
+            if prefer_video:
+                candidate_groups.append(
+                    self.search(scene.visual_query, prefer_video=True)
+                )
+                broad_query = self._broaden_video_query(scene.visual_query)
+                if broad_query != scene.visual_query:
+                    candidate_groups.append(
+                        self.search(broad_query, prefer_video=True)
+                    )
+            candidate_groups.append(
+                self.search(scene.visual_query, prefer_video=False)
+            )
+            candidates = [
+                candidate for group in candidate_groups for candidate in group
+            ]
             selected = next(
                 (
                     candidate
@@ -74,6 +89,8 @@ class CommonsAssetProvider:
                 raise RuntimeError(f"license validation failed for {asset.source_url}")
             used_urls.add(asset.file_url)
             assets.append(asset)
+            if asset.media_type == "video":
+                motion_count += 1
             print(
                 f"[visuals {index + 1}/{len(scenes)}] accepted "
                 f"{asset.media_type}, {asset.license_name}",
@@ -122,7 +139,9 @@ class CommonsAssetProvider:
             license_name = _plain(
                 metadata.get("LicenseShortName", "") or metadata.get("UsageTerms", "")
             )
-            license_url = str(metadata.get("LicenseUrl", "")).strip()
+            license_url = self._canonical_license_url(
+                license_name, str(metadata.get("LicenseUrl", "")).strip()
+            )
             attribution = _plain(
                 metadata.get("Attribution", "")
                 or metadata.get("Credit", "")
@@ -141,6 +160,37 @@ class CommonsAssetProvider:
                 }
             )
         return results
+
+    @staticmethod
+    def _broaden_video_query(query: str) -> str:
+        """Keep concrete subject terms while removing brittle archive phrasing."""
+        words = re.findall(r"[A-Za-z0-9'-]+", query)
+        stop = {
+            "archive",
+            "archival",
+            "footage",
+            "film",
+            "video",
+            "photograph",
+            "photo",
+            "historical",
+            "scene",
+        }
+        concrete = [word for word in words if word.lower() not in stop]
+        if not concrete:
+            return query
+        return " ".join(concrete[:6] + ["archive", "film"])
+
+    @staticmethod
+    def _canonical_license_url(license_name: str, license_url: str) -> str:
+        if license_url:
+            return license_url
+        probe = license_name.lower()
+        if "public domain" in probe:
+            return "https://creativecommons.org/publicdomain/mark/1.0/"
+        if "cc0" in probe:
+            return "https://creativecommons.org/publicdomain/zero/1.0/"
+        return ""
 
     @staticmethod
     def _license_allowed(candidate: dict[str, str]) -> bool:
