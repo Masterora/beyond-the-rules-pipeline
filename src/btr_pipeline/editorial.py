@@ -97,11 +97,15 @@ class EditorialPipeline:
             web_search=True,
             temperature=0.1,
         )
+        fact_data = self._unwrap_story_payload(fact_data)
         if fact_data.get("reject_reason"):
             raise RuntimeError(f"fact gate rejected story: {fact_data['reject_reason']}")
         self._write_json(run_dir / "02-fact-checked.json", fact_data)
 
         fact_story = Story.from_dict(fact_data)
+        fact_errors = fact_story.validate()
+        if fact_errors:
+            raise RuntimeError("fact gate returned incomplete story: " + "; ".join(fact_errors))
         source_errors = self._verify_sources(fact_story)
         for repair_attempt in range(1, 3):
             if not source_errors:
@@ -120,12 +124,19 @@ class EditorialPipeline:
                 web_search=True,
                 temperature=0.1,
             )
+            repaired_data = self._unwrap_story_payload(repaired_data)
             if repaired_data.get("reject_reason"):
                 raise RuntimeError(
                     f"source repair rejected story: {repaired_data['reject_reason']}"
                 )
             fact_data = repaired_data
             fact_story = Story.from_dict(fact_data)
+            repaired_errors = fact_story.validate()
+            if repaired_errors:
+                raise RuntimeError(
+                    "source repair returned incomplete story: "
+                    + "; ".join(repaired_errors)
+                )
             source_errors = self._verify_sources(fact_story)
             self._write_json(
                 run_dir / f"03-source-repair-{repair_attempt}.json", fact_data
@@ -133,20 +144,56 @@ class EditorialPipeline:
         if source_errors:
             raise RuntimeError("source repair failed: " + "; ".join(source_errors))
 
-        print("[editorial 4/4] editing for human cadence and retention", flush=True)
-        final_data = self.client.chat_json(
-            system=f"{CHANNEL_BRIEF}\n\n{RETENTION_PROMPT}",
-            user=json.dumps(fact_data, ensure_ascii=False),
-            temperature=0.35,
-        )
-        story = Story.from_dict(final_data)
-        errors = story.validate()
-        errors.extend(self._verify_sources(story))
-        if errors:
-            raise RuntimeError("editorial gate failed: " + "; ".join(errors))
+        story = fact_story
+        fact_urls = {source.url for source in fact_story.sources}
+        for retention_attempt in range(1, 3):
+            print(
+                f"[editorial 4/4] editing for human cadence and retention, "
+                f"attempt {retention_attempt}/2",
+                flush=True,
+            )
+            final_data = self._unwrap_story_payload(
+                self.client.chat_json(
+                    system=f"{CHANNEL_BRIEF}\n\n{RETENTION_PROMPT}",
+                    user=json.dumps(fact_data, ensure_ascii=False),
+                    temperature=0.35 if retention_attempt == 1 else 0.15,
+                )
+            )
+            candidate = Story.from_dict(final_data)
+            errors = candidate.validate()
+            candidate_urls = {source.url for source in candidate.sources}
+            if candidate_urls != fact_urls:
+                errors.append("retention edit changed the verified source set")
+            if len(candidate.scenes) != len(fact_story.scenes):
+                errors.append("retention edit changed the verified scene count")
+            if not errors:
+                source_errors = self._verify_sources(candidate)
+                errors.extend(source_errors)
+            if not errors:
+                story = candidate
+                break
+            print(
+                "[editorial 4/4] rejected incomplete retention edit: "
+                + "; ".join(errors),
+                flush=True,
+            )
+        else:
+            print(
+                "[editorial 4/4] using complete fact-checked version after "
+                "retention edits failed validation",
+                flush=True,
+            )
         self._write_json(run_dir / "story.json", story.as_dict())
         self._write_sources(run_dir / "sources.md", story)
         return story
+
+    @staticmethod
+    def _unwrap_story_payload(data: dict) -> dict:
+        """Accept a model's harmless {story: ...} wrapper, never an empty shell."""
+        nested = data.get("story")
+        if isinstance(nested, dict):
+            return nested
+        return data
 
     @staticmethod
     def _verify_sources(story: Story) -> list[str]:
