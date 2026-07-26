@@ -45,7 +45,7 @@ def test_rights_gate_accepts_attribution_license():
         file_url="https://upload.wikimedia.org/x.jpg",
         title="X",
         creator="Jane Doe",
-        license_name="CC BY-SA 4.0",
+        license_name="CC BY 4.0",
         license_url="https://creativecommons.org/licenses/by-sa/4.0/",
         attribution="Jane Doe",
     )

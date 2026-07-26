@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 import requests
 
-from .models import Scene, VisualAsset
+from .models import Scene, VisualAsset, license_name_allowed
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 VIDEO_SUFFIXES = (".webm", ".ogv", ".ogg", ".mp4")
@@ -194,18 +194,8 @@ class CommonsAssetProvider:
 
     @staticmethod
     def _license_allowed(candidate: dict[str, str]) -> bool:
-        probe = candidate["license_name"].lower()
-        allowed = any(
-            marker in probe
-            for marker in (
-                "public domain",
-                "cc0",
-                "cc by",
-                "creative commons attribution",
-            )
-        )
         return bool(
-            allowed
+            license_name_allowed(candidate["license_name"])
             and candidate["creator"]
             and candidate["license_url"]
             and candidate["source_url"]
@@ -245,7 +235,7 @@ class CommonsAssetProvider:
     @staticmethod
     def _write_manifest(path: Path, assets: list[VisualAsset]) -> None:
         data = {
-            "policy": "Only Public Domain, CC0, CC BY, or CC BY-SA assets are accepted.",
+            "policy": "Only Public Domain, CC0, or CC BY assets are accepted.",
             "assets": [asset.as_dict() for asset in assets],
         }
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

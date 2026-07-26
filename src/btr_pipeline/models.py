@@ -12,6 +12,13 @@ ALLOWED_LICENSE_MARKERS = (
 )
 
 
+def license_name_allowed(name: str) -> bool:
+    normalized = name.lower()
+    if "share alike" in normalized or "share-alike" in normalized or "by-sa" in normalized:
+        return False
+    return any(marker in normalized for marker in ALLOWED_LICENSE_MARKERS)
+
+
 @dataclass
 class Source:
     title: str
@@ -124,9 +131,8 @@ class VisualAsset:
     provider: str = "Wikimedia Commons"
 
     def validate_license(self) -> bool:
-        normalized = self.license_name.lower()
-        return bool(self.source_url and self.creator and self.license_url) and any(
-            marker in normalized for marker in ALLOWED_LICENSE_MARKERS
+        return bool(self.source_url and self.creator and self.license_url) and (
+            license_name_allowed(self.license_name)
         )
 
     def as_dict(self) -> dict[str, Any]:
