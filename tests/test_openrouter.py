@@ -6,6 +6,9 @@ from btr_pipeline.openrouter import OpenRouterClient
 class FakeResponse:
     def __init__(self, payload):
         self.payload = payload
+        self.text = json.dumps(payload)
+        self.content = self.text.encode()
+        self.headers = {"content-type": "application/json"}
 
     def raise_for_status(self):
         return None
@@ -50,3 +53,20 @@ def test_parse_json_rejects_non_object():
         pass
     else:
         raise AssertionError("non-object JSON must be rejected")
+
+
+def test_parse_api_response_accepts_first_complete_envelope():
+    payload = OpenRouterClient._parse_api_response(
+        '{"choices":[{"message":{"content":"{}"}}]}\nprovider diagnostic'
+    )
+
+    assert payload["choices"][0]["message"]["content"] == "{}"
+
+
+def test_parse_api_response_rejects_unrequested_stream():
+    try:
+        OpenRouterClient._parse_api_response('data: {"choices":[]}')
+    except ValueError as exc:
+        assert "streaming" in str(exc)
+    else:
+        raise AssertionError("unrequested streaming response must be rejected")

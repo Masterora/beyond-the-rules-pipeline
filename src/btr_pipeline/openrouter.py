@@ -62,17 +62,19 @@ class OpenRouterClient:
                 timeout=self.timeout,
             )
             response.raise_for_status()
-            payload = response.json()
-            choice = payload.get("choices", [{}])[0]
-            finish_reason = str(choice.get("finish_reason", "unknown"))
-            content = choice.get("message", {}).get("content", "")
-            if isinstance(content, list):
-                content = "".join(
-                    part.get("text", "")
-                    for part in content
-                    if isinstance(part, dict)
-                )
+            finish_reason = "invalid_envelope"
+            content = ""
             try:
+                payload = self._parse_api_response(response.text)
+                choice = payload.get("choices", [{}])[0]
+                finish_reason = str(choice.get("finish_reason", "unknown"))
+                content = choice.get("message", {}).get("content", "")
+                if isinstance(content, list):
+                    content = "".join(
+                        part.get("text", "")
+                        for part in content
+                        if isinstance(part, dict)
+                    )
                 if not str(content).strip():
                     raise ValueError(f"empty response, finish_reason={finish_reason}")
                 return self._parse_json(str(content))
@@ -80,7 +82,8 @@ class OpenRouterClient:
                 last_error = str(exc)
                 print(
                     f"[openrouter] invalid JSON response on attempt {attempt}/3 "
-                    f"({finish_reason}); retrying",
+                    f"({finish_reason}, {response.headers.get('content-type', 'unknown')}, "
+                    f"{len(response.content)} bytes); retrying",
                     flush=True,
                 )
                 messages.extend(
@@ -96,6 +99,23 @@ class OpenRouterClient:
                     ]
                 )
         raise RuntimeError(f"OpenRouter returned no valid JSON after 3 attempts: {last_error}")
+
+    @staticmethod
+    def _parse_api_response(content: str) -> dict[str, Any]:
+        """Decode a non-streaming OpenRouter envelope defensively."""
+        stripped = content.lstrip()
+        if stripped.startswith("data:"):
+            raise ValueError("unexpected streaming API response")
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError:
+            start = content.find("{")
+            if start < 0:
+                raise
+            data, _ = json.JSONDecoder().raw_decode(content[start:])
+        if not isinstance(data, dict):
+            raise TypeError("OpenRouter API response must be a JSON object")
+        return data
 
     def speech(
         self,
