@@ -1,0 +1,207 @@
+{
+  "title": "美元不再兑黄金：一条“只对官方持有者有效”的承诺如何崩盘",
+  "thumbnail_text": "承诺暂停",
+  "hook": "一句“暂时”，让一群人立刻失去兑现通道：外国官方持有者手里的美元，不能再按制度承诺去换美国的黄金。对普通人这只是财经新闻；对管理外汇储备的官方机构，这是锚被拔掉。\n\n更反常识的是：这条承诺从来不是对所有美元持有人开放的。一个只给“少数玩家”用的兑换接口，为什么能支撑全球汇率秩序？它又是怎么在压力下走到“暂停”，并最终推动规则在文本上被改写？",
+  "description": "布雷顿森林体系把美元与黄金官价挂钩（常见表述为35美元/盎司），并以美元为核心支撑战后汇率安排。权威梳理指出，这一可兑换安排主要面向外国官方持有者，而不是普通私人持币者。表面看它为汇率提供锚；但当海外美元资产不断累积、而美国官方黄金储备承压时，体系就会面对“承诺—兑现能力”之间的张力。\n\n本期只使用可核查的一手讲话文本与权威机构材料，追踪从制度设计、到黄金市场防守与裂缝、到“关金窗”（暂停可兑换性）的公开政策动作，并说明后续如何在IMF条款层面被制度化。最后给出判断框架：当你看到“只对某类人有效”的承诺时，如何评估其脆弱点、触发条件与典型的崩盘方式。",
+  "tags": [
+    "布雷顿森林体系",
+    "尼克松冲击",
+    "关金窗",
+    "美元",
+    "黄金",
+    "国际货币体系",
+    "固定汇率",
+    "制度漏洞",
+    "监管与套利",
+    "IMF"
+  ],
+  "sources": [
+    {
+      "title": "Address to the Nation Outlining a New Economic Policy: “The Challenge of Peace” (Transcript)",
+      "url": "https://www.presidency.ucsb.edu/documents/address-the-nation-outlining-new-economic-policy-the-challenge-peace",
+      "publisher": "The American Presidency Project (University of California, Santa Barbara)",
+      "published_at": "1971-08-15",
+      "authority": "primary"
+    },
+    {
+      "title": "Closing of the Gold Window",
+      "url": "https://www.federalreservehistory.org/essays/closing-the-gold-window",
+      "publisher": "Federal Reserve History (Federal Reserve Bank of St. Louis)",
+      "published_at": "",
+      "authority": "secondary"
+    },
+    {
+      "title": "London Gold Pool",
+      "url": "https://www.federalreservehistory.org/essays/london-gold-pool",
+      "publisher": "Federal Reserve History (Federal Reserve Bank of St. Louis)",
+      "published_at": "",
+      "authority": "secondary"
+    },
+    {
+      "title": "Status Report of U.S. Government Gold Reserve",
+      "url": "https://fiscaldata.treasury.gov/datasets/status-report-government-gold-reserve/status-report-government-gold-reserve",
+      "publisher": "U.S. Department of the Treasury (Fiscal Data)",
+      "published_at": "",
+      "authority": "primary"
+    },
+    {
+      "title": "Consumer Price Index (CPI-U) Data",
+      "url": "https://www.bls.gov/cpi/data.htm",
+      "publisher": "U.S. Bureau of Labor Statistics",
+      "published_at": "",
+      "authority": "primary"
+    },
+    {
+      "title": "IMF Articles of Agreement—Second Amendment (background and text gateway)",
+      "url": "https://www.imf.org/external/about/histend.htm",
+      "publisher": "International Monetary Fund",
+      "published_at": "",
+      "authority": "primary"
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "一条“只对官方持有者开放”的承诺，被宣布暂停",
+      "narration": "1971年8月15日周日晚，尼克松在全国讲话里宣布：美国将“暂时”停止美元对黄金（以及其他储备资产）的可兑换性。\n\n在布雷顿森林体系下，这个兑换接口主要面向外国官方持有者，并不是让普通个人拿美元按官价换黄金。于是同一条声明，击中的不是“所有人”，而是那批把美元当作储备锚的机构。问题来了：一条只对少数人开放的承诺，怎么会影响整个体系？",
+      "visual_query": "Richard Nixon delivering August 15 1971 television address Challenge of Peace archival photo",
+      "cited_source_urls": [
+        "https://www.presidency.ucsb.edu/documents/address-the-nation-outlining-new-economic-policy-the-challenge-peace",
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "1971-08-15：尼克松宣布“暂时”暂停美元对黄金（及其他储备资产）的可兑换性。"
+    },
+    {
+      "heading": "规则诞生：战后安排把美元与黄金官价挂钩",
+      "narration": "战后，各国需要一个能结算、能对齐汇率预期的共同参照。\n\n权威梳理显示：布雷顿森林体系以美元为中心，并将美元与黄金官价挂钩（常见表述为35美元/盎司），在此基础上形成固定或可调整的汇率结构。它提供的不是“永恒稳定”，而是一种可操作的锚。下一步要看：这个锚到底靠什么兑现？",
+      "visual_query": "Bretton Woods Conference 1944 Mount Washington Hotel delegates photograph",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window",
+        "https://www.imf.org/external/about/histend.htm"
+      ],
+      "on_screen_fact": "布雷顿森林体系以美元为中心，并与黄金官价挂钩。"
+    },
+    {
+      "heading": "反常识细节：并非“所有美元持有人”都能按官价兑金",
+      "narration": "“美元与黄金挂钩”常被误读成：任何美元持有人都能拿着纸币去换黄金。\n\n但权威梳理指出，实践中可兑换机制主要与外国官方持有者相关，而不是对私人市场全面开放。它把挤兑压力挡在门外，也把决定权集中在少数机构手里。于是新的问题出现了：当少数人握着“合法提现口”，他们会在什么时候一起去按按钮？",
+      "visual_query": "U.S. official gold reserve vault archival photo (non-specific)",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "在布雷顿森林体系下，可兑换机制主要面向外国官方持有者，而非私人市场。"
+    },
+    {
+      "heading": "压力机制：海外美元增长，兑现资产受约束",
+      "narration": "体系运行越久，海外持有的美元资产就越多。\n\n权威梳理把脆弱点说得很直白：海外美元供给的增长，与美国用来支撑承诺的官方黄金之间，会出现张力。这里不报未经本片来源支持的精确数值，只抓机制——当“可被持有的承诺”扩张快于“可用于兑现的资产”，信心就会被反复压力测试。接下来，谁会先动手做防守？",
+      "visual_query": "U.S. Treasury gold reserve dataset page screenshot FiscalData",
+      "cited_source_urls": [
+        "https://fiscaldata.treasury.gov/datasets/status-report-government-gold-reserve/status-report-government-gold-reserve",
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "美国财政部公开数据集提供美国政府黄金储备的定期状态报告。"
+    },
+    {
+      "heading": "第一轮防守：央行协作干预黄金市场（London Gold Pool）",
+      "narration": "当市场压力上来，制度不会立刻倒下，它会先自救。\n\n伦敦黄金总库（London Gold Pool）就是一次“集体防守”：多国央行协作买卖黄金，试图把市场金价稳定在官方价格附近。权威梳理也提示了它的代价——这像消耗战，稳定越久，消耗越大。问题是：当成员开始计算成本，协作还能维持多久？",
+      "visual_query": "Bank of England building Threadneedle Street London archival photo 1960s",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/london-gold-pool"
+      ],
+      "on_screen_fact": "London Gold Pool：多国央行曾协作干预黄金市场以维持官方价格附近的稳定。"
+    },
+    {
+      "heading": "1968的裂缝：黄金市场走向“官方—市场”分离",
+      "narration": "防线最终出现断点。\n\n在伦敦黄金总库瓦解之后，权威梳理描述了一种更危险的局面：官方层面仍维持制度性的官方价格观念，但市场价格越来越反映独立的供求与信心。规则文本还在，市场定价已经分叉。接下来要问的是：当市场用价格说“我不信了”，官方还能用承诺把它按回去吗？",
+      "visual_query": "London gold market archival photo 1968",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/london-gold-pool"
+      ],
+      "on_screen_fact": "London Gold Pool瓦解后，黄金市场管理出现更明显的“官方—市场”分离。"
+    },
+    {
+      "heading": "谁在“利用规则”：兑换权集中带来的先行动激励",
+      "narration": "这时再看“只对官方开放”的设计，它有一个会被放大的后果：先行动者优势。\n\n站在外国官方持有者的角度，关键不是态度，而是风险管理。只要兑换窗口还开着、可持续性又被质疑，提前把美元兑换成黄金就能降低暴露。我们不点名国家、不引用本片来源未给出的兑换细节，只强调激励方向：接口越集中，抢先兑现的冲动越强。那美国会怎么选？",
+      "visual_query": "Central bank gold reserve vault bars archival photo",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "兑换权集中在官方主体，会放大压力下的“先行动”激励。"
+    },
+    {
+      "heading": "1971前后：问题从“信心”变成“兑付与储备”",
+      "narration": "当局面进入高压区，讨论就不再是抽象的“汇率制度优雅不优雅”。\n\n权威梳理把1971年前后的压力指向两端：一端是对可兑换承诺的信心，另一端是官方黄金储备的承压。对政策制定者而言，只要窗口还在，试探就会继续，风险会不断向储备端集中。于是关键变成：美国是保窗口，还是切断窗口？",
+      "visual_query": "U.S. Treasury Department building Washington DC archival photo early 1970s",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window",
+        "https://fiscaldata.treasury.gov/datasets/status-report-government-gold-reserve/status-report-government-gold-reserve"
+      ],
+      "on_screen_fact": "权威梳理将“黄金储备压力”视为1971年政策转向的重要背景之一。"
+    },
+    {
+      "heading": "关键动作：尼克松把“暂时”写进政策，并打包一揽子措施",
+      "narration": "8月15日的讲话里，“暂时停止可兑换性”不是孤立动作。\n\n一手文本显示，尼克松同时宣布了进口附加费、工资与物价管制等措施。无论评价如何，至少可以确认：美国在那一刻把维持旧的可兑换承诺放到了次要位置。更关键的是，“暂时”是话术，但信任的暂停往往不是可逆按钮。接下来各方会如何重新定价这份承诺？",
+      "visual_query": "Nixon 1971 New Economic Policy speech still image",
+      "cited_source_urls": [
+        "https://www.presidency.ucsb.edu/documents/address-the-nation-outlining-new-economic-policy-the-challenge-peace"
+      ],
+      "on_screen_fact": "讲话包含：暂停可兑换性、10%进口附加费、工资物价管制等措施。"
+    },
+    {
+      "heading": "第一波后果：不是“一夜换天”，而是进入谈判与过渡",
+      "narration": "关口一关，世界并不会在第二天就自动找到新秩序。\n\n权威梳理指出，暂停可兑换性之后，各方经历了协商与调整；整体趋势是从以黄金承诺支撑的固定安排，走向更灵活的汇率与更频繁的调整。本片不展开本来源未提供的谈判细节，只给你一个判断：当核心承诺被暂停，短期修补可能发生，但长期结构已经转向。那代价会落在哪？",
+      "visual_query": "1970s foreign exchange market archival photo",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window",
+        "https://www.imf.org/external/about/histend.htm"
+      ],
+      "on_screen_fact": "权威材料将1970年代的制度演变与更灵活的汇率安排联系起来。"
+    },
+    {
+      "heading": "谁付出代价：不确定性上升；通胀事实与因果分开看",
+      "narration": "锚变弱，最先上升的是不确定性。\n\n汇率波动会改变进出口价格与企业成本，也会影响家庭对未来价格的预期。BLS的CPI数据记录了美国在1970年代通胀显著上行的阶段。但这里必须把“事实”和“因果”分开：我们只用数据确认通胀上行现象；成因通常被讨论为多因素，不能把它简化成一次政策动作的单线结果。那规则层面怎么把新现实写进去？",
+      "visual_query": "BLS CPI-U data table screenshot 1970s inflation",
+      "cited_source_urls": [
+        "https://www.bls.gov/cpi/data.htm",
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "BLS CPI数据记录了美国在1970年代通胀上行的阶段。"
+    },
+    {
+      "heading": "规则如何被改写：IMF条款承认更灵活汇率，并调整黄金角色",
+      "narration": "制度最终要落到条文里，才算“新常态”。\n\nIMF关于《协定条款》第二次修正案的背景与文本入口，记录了1970年代国际货币规则的正式调整：更灵活的汇率安排得到制度层面的承认，同时黄金在体系中的角色也发生变化。这一步意味着：8月15日不只是“暂停”，而是把旧锚的退出写进新框架。接下来约束来自哪里？",
+      "visual_query": "International Monetary Fund headquarters Washington DC exterior photo",
+      "cited_source_urls": [
+        "https://www.imf.org/external/about/histend.htm"
+      ],
+      "on_screen_fact": "IMF页面提供《协定条款》第二次修正案的背景与文本入口，反映1970年代国际货币规则的正式调整。"
+    },
+    {
+      "heading": "新约束长什么样：从“硬库存”转向“信誉与预期”的反馈",
+      "narration": "在可兑换承诺下，约束最直观：黄金储备与兑付压力。\n\n权威梳理常用的对比是：过渡到更灵活安排后，约束更依赖市场对政策、通胀与汇率路径的预期反馈。它不一定更“宽松”，只是约束的形态变了——从库存式的硬边界，变成信誉与预期的动态边界。问题是：当你在别的制度里遇到“接口型承诺”，怎么判断它会不会也走到暂停？",
+      "visual_query": "Federal Reserve building Washington DC facade archival photo",
+      "cited_source_urls": [
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window",
+        "https://www.imf.org/external/about/histend.htm"
+      ],
+      "on_screen_fact": "制度转型后，约束更体现为对政策可信度与预期的反馈。"
+    },
+    {
+      "heading": "回扣开场：识别“接口型承诺”的寿命（三个压力测试）",
+      "narration": "回到缩略图那两个字：承诺暂停。\n\n这类体系像一个“对少数人开放的兑现接口”，却被当成更大秩序的锚。看到类似结构，你可以用三个问题做压力测试：第一，承诺资产的增长是否可能长期快于可兑现资产？第二，兑现接口集中在哪些主体手里，压力下是否会出现加速兑现的激励？第三，为维持承诺是否需要越来越多的补丁与协调（例如反复干预、临时规则）？三项同时出现时，常见路径就是：暂停、重定价、再立法。",
+      "visual_query": "gold reserve vault door close-up archival photo",
+      "cited_source_urls": [
+        "https://www.presidency.ucsb.edu/documents/address-the-nation-outlining-new-economic-policy-the-challenge-peace",
+        "https://fiscaldata.treasury.gov/datasets/status-report-government-gold-reserve/status-report-government-gold-reserve",
+        "https://www.federalreservehistory.org/essays/closing-the-gold-window"
+      ],
+      "on_screen_fact": "判断框架：兑现资产约束、接口集中度、以及维持承诺所需的补丁与协调强度。"
+    }
+  ],
+  "factual_risk_notes": [
+    "避免将1970年代通胀归因于“关金窗”单一原因：本片只用BLS CPI确认通胀上行现象；成因需以多因素表述，并明确边界。",
+    "避免给出未被本片sources直接支持的精确数字（例如黄金外流金额、具体国家兑换数量、某年储备下降幅度等）。如需数字与时点，应补充引用当时官方统计或权威历史数据表。",
+    "“只对央行开放”的表述需更精确：权威梳理通常指向“外国官方持有者/官方机构”，不宜把范围缩得过窄或绝对化。",
+    "避免把制度演变写成单线条必然论：对“赢家/输家”的判断应谨慎，更多聚焦可核查的制度变化与激励结构。",
+    "如使用‘两层价格/双轨’等概念，应以权威梳理对伦敦黄金总库瓦解后市场管理分离的描述为依据，不延伸到未被sources支持的细节。"
+  ],
+  "synthetic_media_disclosure": "旁白使用合成语音；画面仅使用具有明确许可或可合规使用的档案/素材；不使用纯AI概念插图作为关键事实依据。"
+}

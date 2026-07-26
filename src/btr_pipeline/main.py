@@ -14,13 +14,23 @@ from .qa import QualityGate
 from .youtube import YouTubeUploader
 
 
-def produce(run_dir: Path, settings: Settings, *, skip_upload: bool = False) -> dict:
+def produce(
+    run_dir: Path,
+    settings: Settings,
+    *,
+    skip_upload: bool = False,
+    story_json: Path | None = None,
+) -> dict:
     run_dir.mkdir(parents=True, exist_ok=True)
     _require_binaries("ffmpeg", "ffprobe")
     recent_topics = _load_recent_topics(Path(".state/recent-topics.json"))
     client = OpenRouterClient(settings.openrouter_api_key, settings.editorial_model)
 
-    story = EditorialPipeline(client).build_story(run_dir, recent_topics)
+    editorial = EditorialPipeline(client)
+    if story_json is not None:
+        story = editorial.load_verified_story(story_json, run_dir)
+    else:
+        story = editorial.build_story(run_dir, recent_topics)
     assets = CommonsAssetProvider().collect(story.scenes, run_dir)
     speech = NarrationProducer(
         client, model=settings.tts_model, voice=settings.tts_voice
@@ -96,6 +106,7 @@ def main() -> None:
     parser.add_argument("--runs-root", type=Path, default=Path("runs"))
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-upload", action="store_true")
+    parser.add_argument("--story-json", type=Path)
     args = parser.parse_args()
     run_dir = args.run_dir or make_run_dir(args.runs_root)
     if args.dry_run:
@@ -105,6 +116,7 @@ def main() -> None:
             run_dir,
             Settings.from_env(require_secrets=not args.skip_upload),
             skip_upload=args.skip_upload,
+            story_json=args.story_json,
         )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

@@ -1,3 +1,5 @@
+import json
+
 from btr_pipeline.editorial import EditorialPipeline
 
 from .test_models import valid_story
@@ -86,3 +88,40 @@ def test_invalid_retention_edits_fall_back_to_verified_story(tmp_path, monkeypat
 
     assert result.as_dict() == story.as_dict()
     assert len(client.calls) == 4
+
+
+def test_known_source_move_updates_source_and_scene_citations():
+    story = valid_story()
+    old_url = (
+        "https://www.cia.gov/readingroom/collection/"
+        "project-azorian-hughes-glomar-explorer/"
+    )
+    new_url = "https://www.cia.gov/legacy/museum/exhibit/project-azorian/"
+    replaced = story.sources[0].url
+    story.sources[0].url = old_url
+    for scene in story.scenes:
+        scene.cited_source_urls = [
+            old_url if url == replaced else url for url in scene.cited_source_urls
+        ]
+
+    EditorialPipeline._canonicalize_known_source_moves(story)
+
+    assert story.sources[0].url == new_url
+    assert any(new_url in scene.cited_source_urls for scene in story.scenes)
+    assert all(old_url not in scene.cited_source_urls for scene in story.scenes)
+
+
+def test_prepared_story_is_reverified_and_written(tmp_path, monkeypatch):
+    story = valid_story()
+    source_path = tmp_path / "prepared.json"
+    source_path.write_text(
+        json.dumps(story.as_dict(), ensure_ascii=False), encoding="utf-8"
+    )
+    pipeline = EditorialPipeline(FakeEditorialClient([]))
+    monkeypatch.setattr(pipeline, "_verify_sources", lambda item: [])
+
+    result = pipeline.load_verified_story(source_path, tmp_path / "run")
+
+    assert result.as_dict() == story.as_dict()
+    assert (tmp_path / "run" / "story.json").exists()
+    assert (tmp_path / "run" / "sources.md").exists()

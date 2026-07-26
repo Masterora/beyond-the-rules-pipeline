@@ -76,6 +76,13 @@ sources 中的 URL，并同步替换每个 scenes.cited_source_urls 中的旧 UR
 """.strip()
 
 
+KNOWN_SOURCE_MOVES = {
+    "https://www.cia.gov/readingroom/collection/project-azorian-hughes-glomar-explorer/": (
+        "https://www.cia.gov/legacy/museum/exhibit/project-azorian/"
+    ),
+}
+
+
 class EditorialPipeline:
     def __init__(self, client: OpenRouterClient):
         self.client = client
@@ -101,9 +108,11 @@ class EditorialPipeline:
         fact_data = self._unwrap_story_payload(fact_data)
         if fact_data.get("reject_reason"):
             raise RuntimeError(f"fact gate rejected story: {fact_data['reject_reason']}")
-        self._write_json(run_dir / "02-fact-checked.json", fact_data)
 
         fact_story = Story.from_dict(fact_data)
+        self._canonicalize_known_source_moves(fact_story)
+        fact_data = fact_story.as_dict()
+        self._write_json(run_dir / "02-fact-checked.json", fact_data)
         fact_errors = fact_story.validate()
         if fact_errors:
             raise RuntimeError("fact gate returned incomplete story: " + "; ".join(fact_errors))
@@ -132,6 +141,8 @@ class EditorialPipeline:
                 )
             fact_data = repaired_data
             fact_story = Story.from_dict(fact_data)
+            self._canonicalize_known_source_moves(fact_story)
+            fact_data = fact_story.as_dict()
             repaired_errors = fact_story.validate()
             if repaired_errors:
                 raise RuntimeError(
@@ -195,6 +206,26 @@ class EditorialPipeline:
         self._write_sources(run_dir / "sources.md", story)
         return story
 
+    def load_verified_story(self, source_path: Path, run_dir: Path) -> Story:
+        run_dir.mkdir(parents=True, exist_ok=True)
+        data = self._unwrap_story_payload(
+            json.loads(source_path.read_text(encoding="utf-8"))
+        )
+        story = Story.from_dict(data)
+        self._canonicalize_known_source_moves(story)
+        errors = story.validate()
+        if errors:
+            raise RuntimeError("prepared story is incomplete: " + "; ".join(errors))
+        source_errors = self._verify_sources(story)
+        if source_errors:
+            raise RuntimeError(
+                "prepared story has unavailable sources: " + "; ".join(source_errors)
+            )
+        self._write_json(run_dir / "story.json", story.as_dict())
+        self._write_sources(run_dir / "sources.md", story)
+        print("[editorial] loaded and verified prepared story", flush=True)
+        return story
+
     @staticmethod
     def _unwrap_story_payload(data: dict) -> dict:
         """Accept a model's harmless {story: ...} wrapper, never an empty shell."""
@@ -202,6 +233,21 @@ class EditorialPipeline:
         if isinstance(nested, dict):
             return nested
         return data
+
+    @staticmethod
+    def _canonicalize_known_source_moves(story: Story) -> None:
+        replacements: dict[str, str] = {}
+        for source in story.sources:
+            replacement = KNOWN_SOURCE_MOVES.get(source.url)
+            if replacement:
+                replacements[source.url] = replacement
+                source.url = replacement
+        if not replacements:
+            return
+        for scene in story.scenes:
+            scene.cited_source_urls = [
+                replacements.get(url, url) for url in scene.cited_source_urls
+            ]
 
     @staticmethod
     def _verify_sources(story: Story) -> list[str]:

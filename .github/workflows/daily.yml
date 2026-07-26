@@ -8,6 +8,15 @@ on:
         required: false
         type: boolean
         default: false
+      story_preset:
+        description: Prepared story to resume, or auto for daily discovery
+        required: false
+        type: choice
+        default: auto
+        options:
+          - auto
+          - gold-window
+          - glomar-response
   schedule:
     # 08:30 Asia/Shanghai. GitHub cron is UTC.
     - cron: "30 0 * * *"
@@ -66,11 +75,17 @@ jobs:
         shell: bash
         run: |
           run_dir="runs/${GITHUB_RUN_ID}"
-          extra=""
+          extra=()
           if [[ "${{ inputs.skip_upload }}" == "true" ]]; then
-            extra="--skip-upload"
+            extra+=("--skip-upload")
           fi
-          btr-produce --run-dir "$run_dir" $extra
+          if [[ "${{ inputs.story_preset }}" == "glomar-response" ]]; then
+            extra+=("--story-json" "stories/glomar-response.json")
+          fi
+          if [[ "${{ inputs.story_preset }}" == "gold-window" ]]; then
+            extra+=("--story-json" "stories/gold-window.json")
+          fi
+          btr-produce --run-dir "$run_dir" "${extra[@]}"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
 
       - name: Save recent-topic history

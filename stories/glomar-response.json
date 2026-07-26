@@ -1,0 +1,203 @@
+{
+  "title": "“既不确认也不否认”：一句话怎样改写了信息公开",
+  "thumbnail_text": "别问了",
+  "hook": "如果你向政府申请一份文件，得到的回复不是“公开”也不是“拒绝”，而是——“我们既不能确认也不能否认这份文件是否存在”。在美国FOIA实践里，这种答复被称为“Glomar response”，并在判例与政府公开指南中被讨论和整理。问题是：它并不写在FOIA（5 U.S.C. § 552）的条文字面里，法院为何会在特定情形下接受这种做法？它保护了什么，又让哪些监督变得更难？这一期我们把它的来源、适用逻辑与代价讲清楚，并在结尾给你一套可复用的判断框架：当权力用“模糊”回应你时，你该怎么追问、怎么判断信息缺口会带来什么成本。",
+  "description": "一句“既不确认也不否认”（neither confirm nor deny），在FOIA（5 U.S.C. § 552）的执法与诉讼实践中，发展成一种被称为“Glomar response”的答复方式。这个名称与一艘船有关：Hughes Glomar Explorer。\n\n本期从Phillippi v. CIA（D.C. Circuit, 1976）切入：申请人请求与该船相关的政府记录，CIA以“既不确认也不否认”回应。法院如何处理“连记录是否存在都不说”的困境？司法部OIP的FOIA Guide如何总结这种做法的适用方式与论证要求？我们将聚焦制度问题：规则为何出现、谁最可能使用它、公众与监督机制为此付出什么代价，以及你在面对类似“战略模糊”时可以怎样拆解与追问。",
+  "tags": [
+    "FOIA",
+    "信息公开",
+    "Glomar response",
+    "法院判例",
+    "情报机构",
+    "制度漏洞",
+    "政府透明",
+    "Project Azorian",
+    "行政法",
+    "档案"
+  ],
+  "sources": [
+    {
+      "title": "Phillippi v. Central Intelligence Agency, 546 F.2d 1009 (D.C. Cir. 1976)",
+      "url": "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+      "publisher": "U.S. Court of Appeals for the D.C. Circuit (hosted by CourtListener/Free Law Project)",
+      "published_at": "1976-12-21",
+      "authority": "primary"
+    },
+    {
+      "title": "5 U.S.C. § 552 (Freedom of Information Act) — U.S. Code (PDF)",
+      "url": "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf",
+      "publisher": "U.S. Government Publishing Office (govinfo.gov)",
+      "published_at": "2023-01-01",
+      "authority": "primary"
+    },
+    {
+      "title": "FOIA Guide (Exemption 1 / classified information; includes Glomar response discussion)",
+      "url": "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1",
+      "publisher": "U.S. Department of Justice, Office of Information Policy",
+      "published_at": "2019-01-01",
+      "authority": "primary"
+    },
+    {
+      "title": "CIA: Project AZORIAN (Hughes Glomar Explorer) Collection / Reading Room materials",
+      "url": "https://www.cia.gov/legacy/museum/exhibit/project-azorian/",
+      "publisher": "Central Intelligence Agency (CIA) — FOIA Electronic Reading Room",
+      "published_at": "2010-01-01",
+      "authority": "primary"
+    },
+    {
+      "title": "National Security Archive briefing book on the CIA’s secret submarine recovery (Project AZORIAN) and declassified records",
+      "url": "https://nsarchive2.gwu.edu/NSAEBB/NSAEBB352/",
+      "publisher": "National Security Archive, The George Washington University",
+      "published_at": "2012-02-15",
+      "authority": "secondary"
+    }
+  ],
+  "scenes": [
+    {
+      "heading": "01｜第三种答复：不说“有”，也不说“没有”",
+      "narration": "很多人对信息公开的直觉是二选一：要么公开、要么依法拒绝。但在美国FOIA实践中，确实存在第三种答复：机构表示“既不能确认也不能否认记录是否存在”（neither confirm nor deny）。这种做法在诉讼中被讨论，并在司法部OIP的FOIA Guide里作为实务要点加以说明。赌注在这里：如果“是否存在”本身也能成为受保护信息，信息公开的起点就会被整体上移。接下来我们回到这句话在判例中被系统讨论的早期现场：一位记者、一艘船、以及一场把FOIA程序推到边界的诉讼。",
+      "visual_query": "close-up scan of 'Phillippi v. Central Intelligence Agency 546 F.2d 1009' opinion text 'neither confirm nor deny' highlighted",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1"
+      ],
+      "on_screen_fact": "在FOIA语境中，“neither confirm nor deny”常被称为“Glomar response”。"
+    },
+    {
+      "heading": "02｜FOIA本来要解决什么：让公众可以申请“现有记录”",
+      "narration": "先把规则摆正：FOIA写在《美国法典》5 U.S.C. § 552中。它的核心机制是：公众可以向机构申请其“机构记录”（agency records），机构必须在法定时限内作出回应，并在适用豁免（exemptions）的范围内决定是否公开。也就是说，它并不等同于“政府主动发布一切”，而是通过“申请—答复—救济”的程序来减少信息不对称。",
+      "visual_query": "US Code PDF page showing '5 U.S.C. 552' Freedom of Information Act text on govinfo",
+      "cited_source_urls": [
+        "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf"
+      ],
+      "on_screen_fact": "FOIA写入《美国法典》5 U.S.C. § 552。"
+    },
+    {
+      "heading": "03｜反常识起点：争议先落在“你有没有记录”",
+      "narration": "“既不确认也不否认”的关键，在于它把争议前移到最基础的一步：机构不讨论内容，先拒绝回答“有没有相关记录”。Phillippi v. CIA（D.C. Circuit, 1976）围绕申请人与CIA之间的这种程序冲突展开：申请请求与Hughes Glomar Explorer相关的政府记录，CIA则主张其无法确认或否认是否存在可回应的记录。对申请人而言，这会让后续争辩更困难——因为连争议对象是否存在都成了不确定信息。",
+      "visual_query": "archival photo of Hughes Glomar Explorer ship docked; newspaper clipping 'Glomar Explorer' 1970s",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://nsarchive2.gwu.edu/NSAEBB/NSAEBB352/"
+      ],
+      "on_screen_fact": "Phillippi案与Hughes Glomar Explorer相关的记录申请有关。"
+    },
+    {
+      "heading": "04｜那艘船为何敏感：与Project AZORIAN相关的解密材料",
+      "narration": "Hughes Glomar Explorer之所以会出现在这类争议里，是因为它与冷战时期的高度敏感项目在公开资料中产生了关联。CIA的Reading Room以“Project AZORIAN（Hughes Glomar Explorer）”为题公开了部分解密材料；国家安全档案馆也整理并引用了相关已解密记录。注意边界：在公开材料存在删节与信息不完整的情况下，本期只在可证实的范围内讨论“项目与船的关联”以及由此引发的制度问题，不推断未公开细节。",
+      "visual_query": "CIA Reading Room Project AZORIAN collection page screenshot; declassified document cover page 'Project AZORIAN' 'Hughes Glomar Explorer'",
+      "cited_source_urls": [
+        "https://www.cia.gov/legacy/museum/exhibit/project-azorian/",
+        "https://nsarchive2.gwu.edu/NSAEBB/NSAEBB352/"
+      ],
+      "on_screen_fact": "CIA Reading Room提供“Project AZORIAN（Hughes Glomar Explorer）”相关解密材料集合页。"
+    },
+    {
+      "heading": "05｜第一次张力：豁免谈的是“披露信息”，但答复本身也会泄露信息",
+      "narration": "FOIA的豁免条款（例如涉及国家安全的豁免）通常围绕“披露是否会造成特定损害”展开。但在Phillippi案这类场景里，机构的主张是：即便只是确认“有/没有记录”，本身也可能披露受保护的信息——因为外部者可以从“承认存在”或“明确否认”推断出敏感事实。换句话说，争执不再只是“你能否给我文件”，而变成“你是否必须回答一个会产生信息含量的问题”。",
+      "visual_query": "highlighted excerpt of FOIA exemptions list; DOJ FOIA Guide Exemption 1 page scroll showing 'Glomar' mention",
+      "cited_source_urls": [
+        "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf",
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1",
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/"
+      ],
+      "on_screen_fact": "在特定情形下，“确认或否认记录存在”本身也可能被主张为受保护信息。"
+    },
+    {
+      "heading": "06｜法院怎么接招：允许主张，但要求可被审查的说明",
+      "narration": "D.C. Circuit在Phillippi案中面对一个程序困境：如果机构既不确认也不否认，申请人如何反驳、法院如何审查？判决的要点是：在某些情形下，确认或否认本身可能造成披露风险，法院可以允许机构采取这种立场；但与此同时，机构不能只抛出一句口号，而需要提供足够的说明材料，供法院在受限条件下评估其主张是否成立。简化来说：从“完全不可审查”走向“以程序方式可审查”。",
+      "visual_query": "CourtListener page for Phillippi v CIA showing procedural posture; D.C. Circuit courthouse exterior photo",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/"
+      ],
+      "on_screen_fact": "Phillippi案讨论了在不确认不否认立场下，法院如何进行有限审查。"
+    },
+    {
+      "heading": "07｜谁最可能使用它：涉及国家安全与机密信息的适用场景",
+      "narration": "从公开指南的总结看，“Glomar response”最常与国家安全、机密信息等豁免论证相联系。司法部OIP的FOIA Guide在相关章节中讨论了这种答复方式的适用与论证结构：机构并不是宣称“FOIA里有一条新的豁免”，而是主张“确认或否认本身会触发既有豁免所保护的利益”。这也解释了它为什么能被复制：它是一种程序上的答复策略，而不是条文层面的新条款。",
+      "visual_query": "DOJ Office of Information Policy FOIA Guide webpage 'Glomar response' section; screenshots of headings 'Exemption 1'",
+      "cited_source_urls": [
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1"
+      ],
+      "on_screen_fact": "司法部OIP FOIA Guide在豁免相关章节中讨论“Glomar response/NCND”答复方式。"
+    },
+    {
+      "heading": "08｜代价一：申请人失去“可核验的确认/否定”",
+      "narration": "对申请人而言，FOIA程序里一个重要的可核验结果，可能是机构明确表示“没有相关记录”或“有记录但适用豁免”。当机构采用不确认不否认立场时，申请人会面临一种结构性困难：你很难区分“确实没有记录”与“有记录但不能说”。Phillippi案恰恰展示了这种程序张力：争议会在“如何让法院获得足够信息以进行审查”上变得更尖锐。",
+      "visual_query": "FOIA request form sample; stack of paper files labeled 'FOIA'; courthouse hallway B-roll",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf"
+      ],
+      "on_screen_fact": "在NCND答复下，申请人往往难以从答复中获得“记录是否存在”的可核验信息。"
+    },
+    {
+      "heading": "09｜为什么叫“Glomar”：名称来自Hughes Glomar Explorer",
+      "narration": "这套答复方式之所以被称为“Glomar response”，与Phillippi案所涉及的对象有关：Hughes Glomar Explorer。也就是说，这个术语的命名并非来自FOIA条文，而是来自围绕具体事件形成的诉讼与公共讨论传统。它提醒我们：很多制度“动作”不是在立法文本里出现的，而是在棘手个案的程序对抗中被总结出来，随后进入执法与指南。",
+      "visual_query": "Hughes Glomar Explorer nameplate 'GLOMAR EXPLORER' close-up; shipyard photo 1970s",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://nsarchive2.gwu.edu/NSAEBB/NSAEBB352/"
+      ],
+      "on_screen_fact": "“Glomar response”这一称呼与Hughes Glomar Explorer相关。"
+    },
+    {
+      "heading": "10｜关键澄清：它不是FOIA条文新增豁免，而是一种“答复方式”",
+      "narration": "容易误解的一点是把“既不确认也不否认”当成FOIA新增豁免。就现有来源能支持的表述而言，它更像一种答复方式：机构主张确认或否认本身会泄露受豁免保护的信息，因此只能用NCND来避免披露。换句话说，它依附既有豁免逻辑（常见于国家安全/机密信息的论证），而不是在FOIA文本里新增一条“可以沉默”的条款。",
+      "visual_query": "split-screen: FOIA statute PDF vs DOJ FOIA Guide webpage; highlight 'Exemption 1' and 'neither confirm nor deny'",
+      "cited_source_urls": [
+        "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf",
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1",
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/"
+      ],
+      "on_screen_fact": "NCND/Glomar通常被论证为既有豁免的适用方式，而非FOIA文本中的独立“新豁免”。"
+    },
+    {
+      "heading": "11｜扩散机制（可证实的边界）：从个案策略到指南化的可复制工具",
+      "narration": "在可核验层面，我们能明确看到的“扩散机制”是：从Phillippi这类案件的司法讨论，进入司法部OIP的公开指南总结。一旦某种做法被指南化，它对一线执行就更“可复制”：机构更容易引用既有论证结构来说明为什么确认/否认本身会产生披露风险。至于它在各领域的具体使用频率与范围，本期不做未经来源支持的量化描述。",
+      "visual_query": "DOJ OIP FOIA Guide navigation menu; search results page for 'Glomar response' site:justice.gov",
+      "cited_source_urls": [
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1"
+      ],
+      "on_screen_fact": "从判例讨论到指南总结，是实务做法被制度化的一种路径。"
+    },
+    {
+      "heading": "12｜规则后来怎样“被驯化”（限定表述）：沉默也需要理由",
+      "narration": "仅基于本期来源，可以确认的趋势是：无论在Phillippi案还是在OIP的指南表述中，“不确认不否认”都不是“随口一句就结束”，而是需要机构提供可供法院评估的说明与论证框架。至于更晚近判例如何进一步细化标准，本期不超出既有来源展开；但至少在这两个权威文本里，核心张力是一致的：国家安全主张与司法可审查性之间，需要用程序与说明来连接。",
+      "visual_query": "court document excerpt discussing need for agency justification; gavel and law books; DOJ OIP guidance PDF download",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1"
+      ],
+      "on_screen_fact": "在相关讨论中，NCND立场通常需要以说明材料支撑，供法院进行有限审查。"
+    },
+    {
+      "heading": "13｜回到交易：谁得利、谁买单（不指认动机）",
+      "narration": "把它当成一笔制度交易更容易理解：收益端是“降低披露风险”——在机构主张确认/否认本身会泄露受保护信息的前提下，NCND提供了一种避免‘答复即披露’的路径。成本端是“增加不确定性与监督成本”——申请人更难获得可核验的存在性信息，法院也需要通过更复杂的程序材料来进行审查。这里我们不推断任何特定机构的主观动机，只讨论结构性后果：信息缺口越大，外部监督要付出的时间与程序成本通常就越高。",
+      "visual_query": "FOIA requester reading redacted documents; newspaper archive room; public records office exterior",
+      "cited_source_urls": [
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1",
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/"
+      ],
+      "on_screen_fact": "制度收益是降低“答复即披露”的风险；制度成本是增加不确定性与监督难度。"
+    },
+    {
+      "heading": "14｜给观众的判断框架：遇到“战略模糊”，用三问拆解",
+      "narration": "回扣开场：为什么一句“既不确认也不否认”能在实践中产生这么大影响？因为它把FOIA争议推进到“答复的最起点”。以后你在任何制度里遇到类似“战略模糊”，可以用三问拆解：第一，模糊保护的到底是“内容”，还是“是否存在/是否发生”这类元信息？第二，若确认或否认，会不会导致外部者据此进行推断，从而触发既有豁免所要防止的披露？第三，这种模糊把成本转移给谁——是申请人投入更多程序与诉讼成本，还是社会用不确定性替代可核验事实？这三问不保证你立刻拿到答案，但能帮你判断：它更接近必要的安全阀，还是需要被更严格论证与审查的例外。",
+      "visual_query": "whiteboard with three questions written in Chinese; FOIA statute PDF in background; courthouse steps wide shot",
+      "cited_source_urls": [
+        "https://www.courtlistener.com/opinion/337189/phillippi-v-central-intelligence-agency/",
+        "https://www.govinfo.gov/content/pkg/USCODE-2023-title5/pdf/USCODE-2023-title5-partI-chap5-subchapII-sec552.pdf",
+        "https://www.justice.gov/oip/foia-guide-2004-edition-exemption-1"
+      ],
+      "on_screen_fact": "三问框架：保护什么元信息？是否会触发可推断披露风险？成本由谁承担？"
+    }
+  ],
+  "factual_risk_notes": [
+    "Project AZORIAN相关细节在不同解密材料中存在删节与不完整处；叙事应以CIA Reading Room与国家安全档案馆公布文件可证实的范围为界，避免推断未公开的具体结果、过程与数量。",
+    "“Glomar response/NCND”并非FOIA条文用语，而是由判例讨论与实务总结形成的答复方式；表述需避免说成“国会新增一条豁免”。",
+    "引用Phillippi案时要区分：法院讨论并允许在特定情形下采取NCND立场，但同时强调需要通过说明材料使其具备可审查性；避免简化成“法院允许政府永远不回答”。",
+    "涉及国家安全豁免（尤其与Exemption 1相关的论证方式）的说明应以司法部OIP指南的公开表述为准，避免对具体机构动机作未经证实的指控或泛化频率。"
+  ],
+  "synthetic_media_disclosure": "旁白使用合成语音；画面均来自有明确许可的档案或素材。"
+}
