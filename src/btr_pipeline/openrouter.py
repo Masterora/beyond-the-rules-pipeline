@@ -31,14 +31,20 @@ class OpenRouterClient:
         web_search: bool = False,
         temperature: float = 0.3,
     ) -> dict[str, Any]:
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
         body: dict[str, Any] = {
             "model": self.model,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            "messages": messages,
             "temperature": temperature,
             "response_format": {"type": "json_object"},
+            "max_tokens": 14_000,
+            "provider": {
+                "order": ["OpenAI", "Azure"],
+                "allow_fallbacks": True,
+            },
         }
         if web_search:
             body["tools"] = [
@@ -47,20 +53,49 @@ class OpenRouterClient:
                     "parameters": {"max_results": 8, "search_context_size": "high"},
                 }
             ]
-        response = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers=self.headers,
-            json=body,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        content = payload["choices"][0]["message"]["content"]
-        if isinstance(content, list):
-            content = "".join(
-                part.get("text", "") for part in content if isinstance(part, dict)
+        last_error = "unknown response error"
+        for attempt in range(1, 4):
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=self.headers,
+                json=body,
+                timeout=self.timeout,
             )
-        return self._parse_json(str(content))
+            response.raise_for_status()
+            payload = response.json()
+            choice = payload.get("choices", [{}])[0]
+            finish_reason = str(choice.get("finish_reason", "unknown"))
+            content = choice.get("message", {}).get("content", "")
+            if isinstance(content, list):
+                content = "".join(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, dict)
+                )
+            try:
+                if not str(content).strip():
+                    raise ValueError(f"empty response, finish_reason={finish_reason}")
+                return self._parse_json(str(content))
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                last_error = str(exc)
+                print(
+                    f"[openrouter] invalid JSON response on attempt {attempt}/3 "
+                    f"({finish_reason}); retrying",
+                    flush=True,
+                )
+                messages.extend(
+                    [
+                        {"role": "assistant", "content": str(content)[:2000]},
+                        {
+                            "role": "user",
+                            "content": (
+                                "上一个响应为空或不是完整 JSON。请重新执行任务，只返回一个"
+                                "完整、合法的 JSON 对象；不要 Markdown，不要解释。"
+                            ),
+                        },
+                    ]
+                )
+        raise RuntimeError(f"OpenRouter returned no valid JSON after 3 attempts: {last_error}")
 
     def speech(
         self,
@@ -92,7 +127,13 @@ class OpenRouterClient:
         if content.startswith("```"):
             content = re.sub(r"^```(?:json)?\s*", "", content)
             content = re.sub(r"\s*```$", "", content)
-        data = json.loads(content)
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError:
+            start = content.find("{")
+            if start < 0:
+                raise
+            data, _ = json.JSONDecoder().raw_decode(content[start:])
         if not isinstance(data, dict):
             raise TypeError("model response must be a JSON object")
         return data
