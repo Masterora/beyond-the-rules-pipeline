@@ -49,6 +49,21 @@ def test_story_context_query_uses_dominant_period_and_place():
     assert CommonsAssetProvider._context_query(scenes) == "1933 United States bank"
 
 
+def test_scene_period_overrides_story_period_for_fallback_footage():
+    from btr_pipeline.models import Scene
+
+    scene = Scene(
+        "one",
+        "n" * 100,
+        "Bretton Woods Conference 1944 Mount Washington Hotel",
+        ["https://a"],
+    )
+
+    assert CommonsAssetProvider._scene_era_query(
+        scene, "1970s United States"
+    ) == "1944 United States"
+
+
 def test_search_metadata_false_positive_is_rejected_by_visible_title():
     candidate = {"title": "Address Before Congress Barack Obama 2009.webm"}
 
@@ -66,6 +81,50 @@ def test_explicit_year_outside_requested_decade_is_penalized():
 
     assert CommonsAssetProvider._candidate_relevance_score(
         candidate, "1930s United States", "1930s United States gold"
+    ) < 20
+
+
+def test_explicit_scene_year_rejects_unrelated_era_fallback():
+    candidate = {"title": "Harlot (1971).webm"}
+
+    assert CommonsAssetProvider._candidate_relevance_score(
+        candidate,
+        "1970s United States",
+        "1970s United States gold",
+        "Bretton Woods Conference 1944 Mount Washington Hotel",
+    ) < 20
+
+
+def test_oversized_video_is_rejected_before_download():
+    candidate = {"byte_size": str(251 * 1024 * 1024)}
+
+    assert CommonsAssetProvider._candidate_downloadable(candidate) is False
+
+
+def test_country_and_one_ambiguous_word_do_not_replace_subject_match():
+    candidate = {"title": "U.S. military medics at Cobra Gold 2015.webm"}
+
+    assert CommonsAssetProvider._candidate_has_semantic_overlap(
+        candidate, "gold reserve vault"
+    ) is False
+
+
+def test_two_subject_terms_are_enough_for_contextual_b_roll():
+    candidate = {"title": "How to detect tungsten filled gold bars.ogv"}
+
+    assert CommonsAssetProvider._candidate_has_semantic_overlap(
+        candidate, "gold reserve vault bars"
+    )
+
+
+def test_story_period_penalizes_modern_video_when_scene_omits_year():
+    candidate = {"title": "New U.S. Treasury Secretary in 2013.ogv"}
+
+    assert CommonsAssetProvider._candidate_relevance_score(
+        candidate,
+        "United States Treasury",
+        "1970s United States Treasury gold",
+        "U.S. Treasury reserve dataset",
     ) < 20
 
 

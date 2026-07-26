@@ -15,6 +15,7 @@ from .models import Scene, VisualAsset, license_name_allowed
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 VIDEO_SUFFIXES = (".webm", ".ogv", ".ogg", ".mp4")
 IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")
+MAX_ASSET_BYTES = 250 * 1024 * 1024
 
 
 def _plain(value: str) -> str:
@@ -44,13 +45,9 @@ class CommonsAssetProvider:
         asset_dir.mkdir(parents=True, exist_ok=True)
         assets: list[VisualAsset] = []
         used_urls: set[str] = set()
+        failed_urls: set[str] = set()
         required_motion = max(2, len(scenes) // 4)
         motion_count = 0
-        interval = max(1, len(scenes) // required_motion)
-        video_slots = {
-            min(1 + offset * interval, len(scenes) - 1)
-            for offset in range(required_motion)
-        }
         era_query = self._era_context_query(scenes)
         context_query = self._context_query(scenes)
         search_cache: dict[tuple[str, bool], list[dict[str, str]]] = {}
@@ -62,6 +59,10 @@ class CommonsAssetProvider:
             return search_cache[key]
 
         for index, scene in enumerate(scenes):
+            scene_era_query = self._scene_era_query(scene, era_query)
+            scene_context_query = self._scene_context_query(
+                scene, scene_era_query, context_query
+            )
             for shot_index in range(self.assets_per_scene):
                 print(
                     f"[visuals scene {index + 1}/{len(scenes)}, "
@@ -69,39 +70,63 @@ class CommonsAssetProvider:
                     flush=True,
                 )
                 motion_needed = required_motion - motion_count
-                scenes_remaining = len(scenes) - index
-                prefer_video = shot_index == 0 and motion_needed > 0 and (
-                    index in video_slots or scenes_remaining <= motion_needed
-                )
+                prefer_video = shot_index == 0 and motion_needed > 0
                 plans: list[tuple[str, bool]] = []
                 variants = self._query_variants(scene.visual_query)
                 if prefer_video:
-                    plans.extend((query, True) for query in variants[:2])
-                    plans.append((context_query, True))
-                    plans.append((era_query, True))
-                plans.extend((query, False) for query in variants[:4])
+                    plans.extend(
+                        (query, True)
+                        for query in self._video_query_variants(scene.visual_query)
+                    )
+                plans.extend((query, False) for query in variants[:6])
+                plans.append((scene_context_query, False))
                 plans.append((context_query, False))
-                plans.append((era_query, False))
                 selected = None
+                local_path = None
                 for query, video_only in plans:
                     candidates = cached_search(query, video_only)
                     eligible = [
                         candidate
                         for candidate in candidates
                         if candidate["file_url"] not in used_urls
+                        and candidate["file_url"] not in failed_urls
                         and self._license_allowed(candidate)
+                        and self._candidate_downloadable(candidate)
+                        and self._candidate_has_semantic_overlap(candidate, query)
                         and self._candidate_relevance_score(
-                            candidate, query, context_query, scene.visual_query
+                            candidate, query, scene_context_query, scene.visual_query
                         )
-                        >= self._minimum_relevance_score(query, era_query)
+                        >= self._minimum_relevance_score(query, scene_context_query)
                     ]
-                    selected = max(
+                    ranked = sorted(
                         eligible,
                         key=lambda candidate: self._candidate_relevance_score(
-                            candidate, query, context_query, scene.visual_query
+                            candidate, query, scene_context_query, scene.visual_query
                         ),
-                        default=None,
+                        reverse=True,
                     )
+                    for candidate in ranked:
+                        suffix = self._suffix(
+                            candidate["file_url"], candidate["media_type"]
+                        )
+                        candidate_path = asset_dir / (
+                            f"scene-{index + 1:02d}-shot-{shot_index + 1:02d}{suffix}"
+                        )
+                        try:
+                            self._download(candidate["file_url"], candidate_path)
+                        except (requests.RequestException, RuntimeError) as exc:
+                            failed_urls.add(candidate["file_url"])
+                            candidate_path.unlink(missing_ok=True)
+                            print(
+                                f"[visuals scene {index + 1}/{len(scenes)}, "
+                                f"shot {shot_index + 1}/{self.assets_per_scene}] skipped "
+                                f"unusable asset: {type(exc).__name__}",
+                                flush=True,
+                            )
+                            continue
+                        selected = candidate
+                        local_path = candidate_path
+                        break
                     if selected is not None:
                         break
                 if selected is None:
@@ -135,11 +160,8 @@ class CommonsAssetProvider:
                         f"no rights-safe visual found for scene {index + 1}, "
                         f"shot {shot_index + 1}: {scene.visual_query}"
                     )
-                suffix = self._suffix(selected["file_url"], selected["media_type"])
-                local_path = asset_dir / (
-                    f"scene-{index + 1:02d}-shot-{shot_index + 1:02d}{suffix}"
-                )
-                self._download(selected["file_url"], local_path)
+                if local_path is None:
+                    raise RuntimeError("selected visual has no downloaded local file")
                 asset = VisualAsset(
                     scene_index=index,
                     local_path=local_path,
@@ -221,6 +243,12 @@ class CommonsAssetProvider:
                 or metadata.get("Credit", "")
                 or creator
             )
+            if not creator and (
+                "public domain" in license_name.lower()
+                or "cc0" in license_name.lower()
+            ):
+                creator = "Creator not specified on the source page"
+                attribution = attribution or creator
             results.append(
                 {
                     "title": _plain(str(page.get("title", ""))).removeprefix("File:"),
@@ -231,6 +259,11 @@ class CommonsAssetProvider:
                     "license_name": license_name,
                     "license_url": license_url,
                     "attribution": attribution,
+                    "byte_size": str(
+                        0
+                        if media_type == "image" and file_url != original_url
+                        else int(info.get("size", 0) or 0)
+                    ),
                 }
             )
         return results
@@ -249,6 +282,7 @@ class CommonsAssetProvider:
             "close-up",
             "closeup",
             "crowd",
+            "data",
             "display",
             "document",
             "documents",
@@ -262,6 +296,7 @@ class CommonsAssetProvider:
             "macro",
             "museum",
             "of",
+            "official",
             "original",
             "overlay",
             "pages",
@@ -270,11 +305,14 @@ class CommonsAssetProvider:
             "photograph",
             "photo",
             "historical",
+            "screenshot",
             "scene",
             "shot",
             "split-screen",
             "text",
             "the",
+            "united",
+            "states",
         }
         concrete: list[str] = []
         seen: set[str] = set()
@@ -300,7 +338,72 @@ class CommonsAssetProvider:
                 continue
             variants.append(compact)
             seen.add(normalized)
+        lower = query.lower()
+        semantic: list[str] = []
+        if "bretton woods" in lower:
+            semantic.append("Bretton Woods Conference")
+        if "nixon" in lower:
+            semantic.extend(("Richard Nixon 1971", "Richard Nixon"))
+        if "bank of england" in lower:
+            semantic.append("Bank of England London")
+        if "london" in lower and "gold" in lower:
+            semantic.append("London gold market")
+        years = re.findall(r"\b(?:18|19|20)\d{2}\b", lower)
+        if "gold" in lower and years:
+            semantic.append(f"gold price {years[0]}")
+        if "gold" in lower and any(
+            marker in lower for marker in ("bar", "reserve", "vault")
+        ):
+            semantic.extend(
+                (
+                    "gold reserve vault",
+                    "gold bars",
+                    "gold bullion",
+                    "gold ingot",
+                    "bank vault gold",
+                )
+            )
+        if "treasury" in lower:
+            semantic.append("United States Treasury")
+        if "foreign exchange" in lower:
+            semantic.append("foreign exchange market")
+        if "cpi" in lower or "inflation" in lower:
+            semantic.append("CPI inflation")
+        if "international monetary fund" in lower:
+            semantic.append("International Monetary Fund")
+        if "federal reserve" in lower:
+            semantic.append("Federal Reserve building")
+        for value in semantic:
+            normalized = value.lower()
+            if normalized not in seen:
+                variants.append(value)
+                seen.add(normalized)
         return variants or [query]
+
+    @classmethod
+    def _video_query_variants(cls, query: str) -> list[str]:
+        lower = query.lower()
+        variants = cls._query_variants(query)[:2]
+        if "nixon" in lower:
+            variants.extend(("Nixon speech", "Nixon"))
+        if "gold" in lower and any(
+            marker in lower for marker in ("bar", "reserve", "vault")
+        ):
+            variants.append("gold bars")
+        if "federal reserve" in lower:
+            variants.append("Federal Reserve")
+        if "treasury" in lower:
+            variants.append("United States Treasury")
+        if "foreign exchange" in lower:
+            variants.append("foreign exchange")
+        deduplicated: list[str] = []
+        seen: set[str] = set()
+        for value in variants:
+            normalized = value.lower()
+            if normalized not in seen:
+                deduplicated.append(value)
+                seen.add(normalized)
+        return deduplicated[:6]
 
     @classmethod
     def _era_context_query(cls, scenes: list[Scene]) -> str:
@@ -327,9 +430,14 @@ class CommonsAssetProvider:
             "archival",
             "building",
             "close",
+            "data",
             "document",
+            "exterior",
             "film",
+            "image",
             "photograph",
+            "photo",
+            "screenshot",
             "states",
             "united",
             "video",
@@ -345,10 +453,60 @@ class CommonsAssetProvider:
         subject = max(words, key=lambda word: (counts[word], -words.index(word)))
         return f"{era} {subject}"
 
+    @classmethod
+    def _scene_era_query(cls, scene: Scene, fallback: str) -> str:
+        """Keep generic fallback footage aligned with the scene's own period."""
+        match = re.search(r"\b((?:18|19|20)\d{2}s?)\b", scene.visual_query)
+        if not match:
+            return fallback
+        period = match.group(1)
+        if re.search(
+            r"United States|American|U\.S\.|Washington DC",
+            scene.visual_query,
+            re.IGNORECASE,
+        ):
+            place = "United States"
+        elif re.search(
+            r"United Kingdom|British|London",
+            scene.visual_query,
+            re.IGNORECASE,
+        ):
+            place = "United Kingdom"
+        elif "united states" in fallback.lower():
+            place = "United States"
+        else:
+            place = "archive"
+        return f"{period} {place}"
+
+    @classmethod
+    def _scene_context_query(
+        cls, scene: Scene, scene_era: str, story_context: str
+    ) -> str:
+        variants = cls._query_variants(scene.visual_query)
+        subject = variants[-1] if len(variants) > 1 else variants[0]
+        context_subject = story_context.split()[-1]
+        if context_subject.lower() not in subject.lower():
+            subject = f"{subject} {context_subject}"
+        return f"{scene_era} {subject}"
+
     @staticmethod
     def _minimum_relevance_score(query: str, era_query: str) -> int:
-        if query == era_query:
-            return 20
+        meaningful = {
+            token
+            for token in re.findall(r"[a-z0-9]+", query.lower())
+            if len(token) >= 4
+            and token
+            not in {
+                "archive",
+                "archival",
+                "historical",
+                "states",
+                "united",
+                "video",
+            }
+        }
+        if len(meaningful) == 1:
+            return 10
         if re.search(r"\b(?:18|19|20)\d0s\b", query):
             return 30
         return 20
@@ -379,6 +537,38 @@ class CommonsAssetProvider:
         )
 
     @staticmethod
+    def _candidate_downloadable(candidate: dict[str, str]) -> bool:
+        try:
+            byte_size = int(candidate.get("byte_size", "0") or 0)
+        except (TypeError, ValueError):
+            return False
+        return byte_size <= MAX_ASSET_BYTES
+
+    @staticmethod
+    def _candidate_has_semantic_overlap(
+        candidate: dict[str, str], query: str
+    ) -> bool:
+        ignored = {
+            "archive",
+            "archival",
+            "historical",
+            "official",
+            "states",
+            "united",
+            "video",
+        }
+        query_tokens = {
+            token
+            for token in re.findall(r"[a-z0-9]+", query.lower())
+            if len(token) >= 4 and token not in ignored
+        }
+        if not query_tokens:
+            return False
+        title_tokens = set(re.findall(r"[a-z0-9]+", candidate["title"].lower()))
+        required = 1 if len(query_tokens) == 1 else 2
+        return len(query_tokens & title_tokens) >= required
+
+    @staticmethod
     def _candidate_relevant(candidate: dict[str, str], query: str) -> bool:
         return CommonsAssetProvider._candidate_relevance_score(candidate, query) >= 20
 
@@ -391,6 +581,20 @@ class CommonsAssetProvider:
     ) -> int:
         """Rank by visible title, era, and country rather than hidden keyword noise."""
         title = candidate["title"].lower()
+        if any(
+            marker in title
+            for marker in (
+                "erotic",
+                "harlot",
+                "nude",
+                "nudity",
+                "porn",
+                "racist",
+                "art society",
+                "striptease",
+            )
+        ):
+            return -100
         title_tokens = set(re.findall(r"[a-z0-9]+", title))
         query_lower = query.lower()
         score = 0
@@ -401,7 +605,10 @@ class CommonsAssetProvider:
         scene_decades = set(
             re.findall(r"\b((?:18|19|20)\d)0s\b", scene_query.lower())
         )
-        requested_decades = query_decades or scene_decades
+        context_decades = set(
+            re.findall(r"\b((?:18|19|20)\d)0s\b", context_query.lower())
+        )
+        requested_decades = query_decades or scene_decades or context_decades
         if requested_decades and explicit_years:
             if any(
                 year // 10 == int(decade)
@@ -411,6 +618,24 @@ class CommonsAssetProvider:
                 score += 20 if query_decades else 10
             else:
                 score -= 30
+        query_years = [
+            int(value) for value in re.findall(r"\b(?:18|19|20)\d{2}\b", query_lower)
+        ]
+        scene_years = [
+            int(value)
+            for value in re.findall(r"\b(?:18|19|20)\d{2}\b", scene_query.lower())
+        ]
+        requested_years = query_years or scene_years
+        if requested_years and explicit_years:
+            nearest = min(
+                abs(requested - actual)
+                for requested in requested_years
+                for actual in explicit_years
+            )
+            if nearest <= 1:
+                score += 15
+            elif nearest > 5:
+                score -= 40
         ignored = {
             "archive",
             "film",
@@ -420,7 +645,9 @@ class CommonsAssetProvider:
         tokens = {
             token
             for token in re.findall(r"[a-z0-9]+", query_lower)
-            if len(token) >= 4 and token not in ignored
+            if len(token) >= 4
+            and token not in ignored
+            and token not in {"official", "states", "united"}
         }
         matches = sum(token in title_tokens for token in tokens)
         score += matches * 10
@@ -446,12 +673,32 @@ class CommonsAssetProvider:
                     "brisbane",
                     "canada",
                     "canadian",
+                    "china",
+                    "chinese",
                     "england",
+                    "iran",
+                    "islamabad",
                     "new zealand",
                     "ontario",
                     "ottawa",
+                    "pakistan",
                     "queensland",
+                    "tehran",
                     "united kingdom",
+                )
+            ):
+                score -= 30
+        if "united kingdom" in context:
+            if any(marker in title for marker in ("england", "london", "united kingdom")):
+                score += 10
+            if any(
+                marker in title
+                for marker in (
+                    "canada",
+                    "china",
+                    "islamabad",
+                    "pakistan",
+                    "united states",
                 )
             ):
                 score -= 30
@@ -477,14 +724,16 @@ class CommonsAssetProvider:
         with self.session.get(url, stream=True, timeout=self.timeout) as response:
             response.raise_for_status()
             content_length = int(response.headers.get("content-length", "0") or 0)
-            if content_length > 250 * 1024 * 1024:
-                raise RuntimeError(f"asset exceeds 250MB: {url}")
+            if content_length > MAX_ASSET_BYTES:
+                raise RuntimeError(f"asset exceeds {MAX_ASSET_BYTES} bytes: {url}")
             with target.open("wb") as handle:
                 downloaded = 0
                 for chunk in response.iter_content(chunk_size=1024 * 1024):
                     downloaded += len(chunk)
-                    if downloaded > 250 * 1024 * 1024:
-                        raise RuntimeError(f"asset exceeds 250MB while downloading: {url}")
+                    if downloaded > MAX_ASSET_BYTES:
+                        raise RuntimeError(
+                            f"asset exceeds {MAX_ASSET_BYTES} bytes while downloading: {url}"
+                        )
                     handle.write(chunk)
 
     @staticmethod
