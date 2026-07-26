@@ -1,0 +1,100 @@
+name: Daily documentary production
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_upload:
+        description: Render and QA without uploading
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # 08:30 Asia/Shanghai. GitHub cron is UTC.
+    - cron: "30 0 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: beyond-the-rules-daily
+  cancel-in-progress: false
+
+jobs:
+  produce:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      YOUTUBE_PUBLIC_UPLOAD_ENABLED: ${{ vars.YOUTUBE_PUBLIC_UPLOAD_ENABLED || 'false' }}
+      EDITORIAL_MODEL: ${{ vars.EDITORIAL_MODEL || 'openai/gpt-5.2' }}
+      TTS_MODEL: ${{ vars.TTS_MODEL || 'qwen/qwen-audio-3.0-tts-plus' }}
+      TTS_VOICE: ${{ vars.TTS_VOICE || 'longanlingxin' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install media runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-cjk
+
+      - name: Install pipeline
+        run: python -m pip install -e '.[test]'
+
+      - name: Run policy and unit tests
+        run: pytest
+
+      - name: Restore recent-topic history
+        id: topic-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: btr-topics-${{ github.run_id }}
+          restore-keys: btr-topics-
+
+      - name: Produce, verify, and upload
+        id: production
+        shell: bash
+        run: |
+          run_dir="runs/${GITHUB_RUN_ID}"
+          extra=""
+          if [[ "${{ inputs.skip_upload }}" == "true" ]]; then
+            extra="--skip-upload"
+          fi
+          btr-produce --run-dir "$run_dir" $extra
+          echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Save recent-topic history
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: btr-topics-${{ github.run_id }}
+
+      - name: Retain non-sensitive production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beyond-the-rules-${{ github.run_id }}
+          path: |
+            runs/${{ github.run_id }}/story.json
+            runs/${{ github.run_id }}/sources.md
+            runs/${{ github.run_id }}/rights-manifest.json
+            runs/${{ github.run_id }}/ATTRIBUTION.md
+            runs/${{ github.run_id }}/captions.srt
+            runs/${{ github.run_id }}/thumbnail.jpg
+            runs/${{ github.run_id }}/qa-report.json
+            runs/${{ github.run_id }}/upload-receipt.json
+            runs/${{ github.run_id }}/run-summary.json
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6

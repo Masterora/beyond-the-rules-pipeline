@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beyond The Rules Uploader</title>
+  <meta name="description" content="Compliance information for the Beyond The Rules YouTube production pipeline.">
+  <style>
+    :root { color-scheme: dark; --ink:#f4efe5; --muted:#a8a49d; --red:#e8372d; --line:#292d32; }
+    * { box-sizing:border-box } body { margin:0; background:#090b0d; color:var(--ink); font:17px/1.65 system-ui,sans-serif; }
+    main { width:min(920px,calc(100% - 40px)); margin:0 auto; padding:96px 0; }
+    .eyebrow { color:var(--red); font-weight:750; letter-spacing:.14em; text-transform:uppercase; }
+    h1 { max-width:780px; font-size:clamp(42px,8vw,82px); line-height:.98; letter-spacing:-.055em; margin:22px 0 32px; }
+    .lead { max-width:720px; color:#d7d2c8; font-size:21px; }
+    section { border-top:1px solid var(--line); margin-top:64px; padding-top:32px; }
+    h2 { font-size:26px; } li { margin:10px 0; color:#cbc7bf; } a { color:#ff766d; }
+    .stamp { display:inline-block; border:1px solid var(--line); padding:8px 12px; color:var(--muted); margin-top:24px; }
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">Self-operated creator tool</div>
+  <h1>Evidence before upload.</h1>
+  <p class="lead">Beyond The Rules Uploader is a private production system used only by the owner of the YouTube channel 规则之外. It researches, rights-checks, renders, and uploads original Chinese documentary videos.</p>
+  <section><h2>What the application does</h2><ul>
+    <li>Uses the narrow <code>youtube.upload</code> permission to upload videos to the channel owner's own account.</li>
+    <li>Does not read comments, subscriptions, analytics, contacts, email, or other Google account data.</li>
+    <li>Defaults every API upload to private while compliance review is pending.</li>
+    <li>Runs factual, media-license, format, and editorial checks before an upload is attempted.</li>
+  </ul></section>
+  <section><h2>Data handling</h2><p>OAuth credentials are stored as encrypted GitHub Actions secrets and are exposed only to the private runtime job. They are not sold, shared, logged, or used for advertising. Generated production artifacts are retained for up to 30 days for quality review.</p></section>
+  <section><h2>Policies and source</h2><p><a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a> · <a href="https://github.com/Masterora/beyond-the-rules-pipeline">Public source code</a> · <a href="https://www.youtube.com/@BeyondThe_Rules">YouTube channel</a></p></section>
+  <div class="stamp">Last updated: 27 July 2026</div>
+</main></body></html>
