@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import time
 from pathlib import Path
 from urllib.parse import quote
 
@@ -27,13 +28,16 @@ class CommonsAssetProvider:
     def __init__(self, timeout: int = 45, assets_per_scene: int = 2):
         self.timeout = timeout
         self.assets_per_scene = assets_per_scene
+        self._last_download_at = 0.0
+        self.download_interval_seconds = 2.0
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "BeyondTheRulesRightsSafeVideo/1.0 (GitHub Actions)"}
         )
         retry = Retry(
-            total=4,
-            backoff_factor=1.0,
+            total=8,
+            backoff_factor=3.0,
+            backoff_max=120,
             status_forcelist=(429, 500, 502, 503, 504),
             allowed_methods=("GET",),
             respect_retry_after_header=True,
@@ -783,6 +787,9 @@ class CommonsAssetProvider:
         return ".webm" if media_type == "video" else ".jpg"
 
     def _download(self, url: str, target: Path) -> None:
+        elapsed = time.monotonic() - self._last_download_at
+        if elapsed < self.download_interval_seconds:
+            time.sleep(self.download_interval_seconds - elapsed)
         with self.session.get(url, stream=True, timeout=self.timeout) as response:
             response.raise_for_status()
             content_length = int(response.headers.get("content-length", "0") or 0)
@@ -797,6 +804,7 @@ class CommonsAssetProvider:
                             f"asset exceeds {MAX_ASSET_BYTES} bytes while downloading: {url}"
                         )
                     handle.write(chunk)
+        self._last_download_at = time.monotonic()
 
     @staticmethod
     def _write_manifest(path: Path, assets: list[VisualAsset]) -> None:
