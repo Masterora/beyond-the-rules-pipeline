@@ -63,6 +63,10 @@ class NarrationProducer:
         speech_dir.mkdir(exist_ok=True)
         outputs: list[Path] = []
         for index, scene in enumerate(story.scenes, start=1):
+            print(
+                f"[narration {index}/{len(story.scenes)}] synthesizing scene",
+                flush=True,
+            )
             raw = speech_dir / f"{index:02d}-raw.mp3"
             polished = speech_dir / f"{index:02d}.wav"
             # Scene-sized calls preserve natural breath and prevent one uniform cadence.
@@ -120,16 +124,22 @@ class VideoRenderer:
             raise RuntimeError("scene, asset, and narration counts do not match")
         segments: list[Segment] = []
         for index, (asset, audio) in enumerate(zip(assets, audio_paths, strict=True)):
+            print(
+                f"[render {index + 1}/{len(assets)}] encoding documentary scene",
+                flush=True,
+            )
             duration = ffprobe_duration(audio) + 0.5
             video = self.segment_dir / f"{index + 1:02d}.mp4"
             self._render_segment(asset, audio, video, duration, index)
             segments.append(Segment(index, audio, video, duration))
 
         clean = self.run_dir / "video-clean.mp4"
+        print("[render] joining clean 1080p master", flush=True)
         self._concatenate(segments, clean)
         captions = self.run_dir / "captions.srt"
         self._write_srt(story, segments, captions)
         subtitled = self.run_dir / "video-subtitled.mp4"
+        print("[render] burning mobile-safe subtitles into publish master", flush=True)
         self._burn_subtitles(clean, captions, subtitled)
         thumbnail = self.run_dir / "thumbnail.jpg"
         self._make_thumbnail(story, assets[0], thumbnail)

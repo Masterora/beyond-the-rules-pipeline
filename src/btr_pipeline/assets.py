@@ -34,6 +34,10 @@ class CommonsAssetProvider:
         assets: list[VisualAsset] = []
         used_urls: set[str] = set()
         for index, scene in enumerate(scenes):
+            print(
+                f"[visuals {index + 1}/{len(scenes)}] finding licensed archival media",
+                flush=True,
+            )
             prefer_video = index % 3 == 0
             candidates = self.search(scene.visual_query, prefer_video=prefer_video)
             if not candidates and prefer_video:
@@ -70,6 +74,11 @@ class CommonsAssetProvider:
                 raise RuntimeError(f"license validation failed for {asset.source_url}")
             used_urls.add(asset.file_url)
             assets.append(asset)
+            print(
+                f"[visuals {index + 1}/{len(scenes)}] accepted "
+                f"{asset.media_type}, {asset.license_name}",
+                flush=True,
+            )
         self._write_manifest(run_dir / "rights-manifest.json", assets)
         self._write_attribution(run_dir / "ATTRIBUTION.md", assets)
         return assets

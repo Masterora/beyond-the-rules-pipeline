@@ -66,11 +66,21 @@ RETENTION_PROMPT = """
 """.strip()
 
 
+SOURCE_REPAIR_PROMPT = """
+你是资料核验编辑。输入 JSON 中部分 source URL 已失效。请联网找到仍可访问且直接支持原陈述
+的替代页面；优先同一机构的新 URL，其次政府、法院、监管、大学、论文或原始档案。更新
+sources 中的 URL，并同步替换每个 scenes.cited_source_urls 中的旧 URL。不要借机改写故事、
+增加未经证实的事实或返回搜索结果页。保持完整原 JSON 结构。若找不到等强度来源，输出
+{"reject_reason":"具体缺口"}。
+""".strip()
+
+
 class EditorialPipeline:
     def __init__(self, client: OpenRouterClient):
         self.client = client
 
     def build_story(self, run_dir: Path, recent_topics: list[str] | None = None) -> Story:
+        print("[editorial 1/4] researching evergreen topic and primary sources", flush=True)
         exclusions = json.dumps(recent_topics or [], ensure_ascii=False)
         draft_data = self.client.chat_json(
             system=CHANNEL_BRIEF,
@@ -80,6 +90,7 @@ class EditorialPipeline:
         )
         self._write_json(run_dir / "01-research-draft.json", draft_data)
 
+        print("[editorial 2/4] running independent factual boundary pass", flush=True)
         fact_data = self.client.chat_json(
             system=f"{CHANNEL_BRIEF}\n\n{FACT_GATE_PROMPT}",
             user=json.dumps(draft_data, ensure_ascii=False),
@@ -90,6 +101,39 @@ class EditorialPipeline:
             raise RuntimeError(f"fact gate rejected story: {fact_data['reject_reason']}")
         self._write_json(run_dir / "02-fact-checked.json", fact_data)
 
+        fact_story = Story.from_dict(fact_data)
+        source_errors = self._verify_sources(fact_story)
+        for repair_attempt in range(1, 3):
+            if not source_errors:
+                break
+            print(
+                f"[editorial 3/4] repairing {len(source_errors)} unavailable source(s), "
+                f"attempt {repair_attempt}/2",
+                flush=True,
+            )
+            repaired_data = self.client.chat_json(
+                system=f"{CHANNEL_BRIEF}\n\n{SOURCE_REPAIR_PROMPT}",
+                user=json.dumps(
+                    {"unavailable_sources": source_errors, "story": fact_data},
+                    ensure_ascii=False,
+                ),
+                web_search=True,
+                temperature=0.1,
+            )
+            if repaired_data.get("reject_reason"):
+                raise RuntimeError(
+                    f"source repair rejected story: {repaired_data['reject_reason']}"
+                )
+            fact_data = repaired_data
+            fact_story = Story.from_dict(fact_data)
+            source_errors = self._verify_sources(fact_story)
+            self._write_json(
+                run_dir / f"03-source-repair-{repair_attempt}.json", fact_data
+            )
+        if source_errors:
+            raise RuntimeError("source repair failed: " + "; ".join(source_errors))
+
+        print("[editorial 4/4] editing for human cadence and retention", flush=True)
         final_data = self.client.chat_json(
             system=f"{CHANNEL_BRIEF}\n\n{RETENTION_PROMPT}",
             user=json.dumps(fact_data, ensure_ascii=False),

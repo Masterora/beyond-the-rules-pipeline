@@ -73,7 +73,9 @@ class YouTubeUploader:
                 "embeddable": False,
             },
         }
+        print("[upload 1/2] sending clean master as private", flush=True)
         clean_receipt = self._resumable_upload(token, clean_master_path, clean_metadata)
+        print("[upload 2/2] sending subtitled publish master as private", flush=True)
         receipt = self._resumable_upload(token, video_path, metadata)
         video_id = str(receipt["id"])
         thumbnail_receipt = self._upload_thumbnail(token, video_id, thumbnail_path)

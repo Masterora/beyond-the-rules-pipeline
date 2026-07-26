@@ -87,6 +87,9 @@ jobs:
           name: beyond-the-rules-${{ github.run_id }}
           path: |
             runs/${{ github.run_id }}/story.json
+            runs/${{ github.run_id }}/01-research-draft.json
+            runs/${{ github.run_id }}/02-fact-checked.json
+            runs/${{ github.run_id }}/03-source-repair-*.json
             runs/${{ github.run_id }}/sources.md
             runs/${{ github.run_id }}/rights-manifest.json
             runs/${{ github.run_id }}/ATTRIBUTION.md

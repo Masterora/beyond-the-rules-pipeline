@@ -88,6 +88,7 @@ class QualityGate:
         report.write_text(json.dumps(checks, ensure_ascii=False, indent=2), encoding="utf-8")
         if errors:
             raise RuntimeError("quality gate failed: " + "; ".join(errors))
+        print("[qa] editorial, rights, motion, format, and duration gates passed", flush=True)
         return checks
 
 
