@@ -1,4 +1,7 @@
+import json
+
 from btr_pipeline.assets import CommonsAssetProvider
+from btr_pipeline.models import Scene
 
 
 def test_public_domain_metadata_gets_canonical_status_url():
@@ -154,3 +157,50 @@ def test_single_name_collision_does_not_pass_two_term_query():
     candidate = {"title": "Perry Iowa welcome sign.jpg"}
 
     assert CommonsAssetProvider._candidate_relevant(candidate, "Perry United States") is False
+
+
+def test_verified_manifest_resumes_without_search(monkeypatch, tmp_path):
+    scenes = [
+        Scene("one", "n" * 100, "gold one", ["https://a"]),
+        Scene("two", "n" * 100, "gold two", ["https://a"]),
+    ]
+    base = {
+        "media_type": "image",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Gold.jpg",
+        "file_url": "https://upload.wikimedia.org/gold.jpg",
+        "title": "Gold.jpg",
+        "creator": "Archivist",
+        "license_name": "CC0",
+        "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "attribution": "Own work",
+    }
+    entries = [
+        {**base, "scene_index": 0},
+        {**base, "scene_index": 0},
+        {
+            **base,
+            "scene_index": 1,
+            "file_url": "https://upload.wikimedia.org/gold-2.jpg",
+        },
+        {
+            **base,
+            "scene_index": 1,
+            "file_url": "https://upload.wikimedia.org/gold-3.jpg",
+        },
+    ]
+    manifest = tmp_path / "assets.json"
+    manifest.write_text(json.dumps({"assets": entries}), encoding="utf-8")
+    downloads = []
+
+    def fake_download(url, target):
+        downloads.append(url)
+        target.write_bytes(b"asset")
+
+    provider = CommonsAssetProvider()
+    monkeypatch.setattr(provider, "_download", fake_download)
+    assets = provider.collect_from_manifest(manifest, scenes, tmp_path / "run")
+
+    assert len(assets) == 4
+    assert len(downloads) == 3
+    assert assets[0].local_path == assets[1].local_path
+    assert (tmp_path / "run" / "rights-manifest.json").exists()

@@ -20,6 +20,7 @@ def produce(
     *,
     skip_upload: bool = False,
     story_json: Path | None = None,
+    assets_json: Path | None = None,
 ) -> dict:
     run_dir.mkdir(parents=True, exist_ok=True)
     _require_binaries("ffmpeg", "ffprobe")
@@ -31,7 +32,11 @@ def produce(
         story = editorial.load_verified_story(story_json, run_dir)
     else:
         story = editorial.build_story(run_dir, recent_topics)
-    assets = CommonsAssetProvider().collect(story.scenes, run_dir)
+    asset_provider = CommonsAssetProvider()
+    if assets_json is not None:
+        assets = asset_provider.collect_from_manifest(assets_json, story.scenes, run_dir)
+    else:
+        assets = asset_provider.collect(story.scenes, run_dir)
     speech = NarrationProducer(
         client, model=settings.tts_model, voice=settings.tts_voice
     ).synthesize(story, run_dir)
@@ -107,6 +112,7 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-upload", action="store_true")
     parser.add_argument("--story-json", type=Path)
+    parser.add_argument("--assets-json", type=Path)
     args = parser.parse_args()
     run_dir = args.run_dir or make_run_dir(args.runs_root)
     if args.dry_run:
@@ -117,6 +123,7 @@ def main() -> None:
             Settings.from_env(require_secrets=not args.skip_upload),
             skip_upload=args.skip_upload,
             story_json=args.story_json,
+            assets_json=args.assets_json,
         )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

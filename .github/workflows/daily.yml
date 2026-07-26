@@ -89,6 +89,7 @@ jobs:
           fi
           if [[ "${{ inputs.story_preset }}" == "gold-window" ]]; then
             extra+=("--story-json" "stories/gold-window.json")
+            extra+=("--assets-json" "stories/gold-window-assets.json")
           fi
           btr-produce --run-dir "$run_dir" "${extra[@]}"
           echo "run_dir=$run_dir" >> "$GITHUB_OUTPUT"

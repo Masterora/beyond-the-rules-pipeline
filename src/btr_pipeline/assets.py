@@ -190,6 +190,68 @@ class CommonsAssetProvider:
         self._write_attribution(run_dir / "ATTRIBUTION.md", assets)
         return assets
 
+    def collect_from_manifest(
+        self, manifest_path: Path, scenes: list[Scene], run_dir: Path
+    ) -> list[VisualAsset]:
+        """Resume a previously rights-verified selection without searching again."""
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        raw_assets = data.get("assets", [])
+        if not isinstance(raw_assets, list):
+            raise TypeError("asset manifest must contain an assets list")
+        expected = len(scenes) * self.assets_per_scene
+        if len(raw_assets) != expected:
+            raise RuntimeError(
+                f"asset manifest has {len(raw_assets)} entries; expected {expected}"
+            )
+
+        asset_dir = run_dir / "assets"
+        asset_dir.mkdir(parents=True, exist_ok=True)
+        assets: list[VisualAsset] = []
+        downloaded: dict[str, Path] = {}
+        shots_per_scene: dict[int, int] = {}
+        for item in raw_assets:
+            scene_index = int(item["scene_index"])
+            if not 0 <= scene_index < len(scenes):
+                raise RuntimeError(f"manifest has invalid scene index: {scene_index}")
+            shots_per_scene[scene_index] = shots_per_scene.get(scene_index, 0) + 1
+            shot_index = shots_per_scene[scene_index]
+            file_url = str(item["file_url"])
+            media_type = str(item["media_type"])
+            local_path = downloaded.get(file_url)
+            if local_path is None:
+                suffix = self._suffix(file_url, media_type)
+                local_path = asset_dir / (
+                    f"scene-{scene_index + 1:02d}-shot-{shot_index:02d}{suffix}"
+                )
+                print(
+                    f"[visuals resume {len(assets) + 1}/{expected}] downloading "
+                    f"verified {media_type}",
+                    flush=True,
+                )
+                self._download(file_url, local_path)
+                downloaded[file_url] = local_path
+            asset = VisualAsset(
+                scene_index=scene_index,
+                local_path=local_path,
+                media_type=media_type,
+                source_url=str(item["source_url"]),
+                file_url=file_url,
+                title=str(item["title"]),
+                creator=str(item["creator"]),
+                license_name=str(item["license_name"]),
+                license_url=str(item["license_url"]),
+                attribution=str(item["attribution"]),
+                provider=str(item.get("provider", "Wikimedia Commons")),
+            )
+            if not asset.validate_license():
+                raise RuntimeError(f"license validation failed for {asset.source_url}")
+            assets.append(asset)
+        if any(count != self.assets_per_scene for count in shots_per_scene.values()):
+            raise RuntimeError("asset manifest must provide two cuts for every scene")
+        self._write_manifest(run_dir / "rights-manifest.json", assets)
+        self._write_attribution(run_dir / "ATTRIBUTION.md", assets)
+        return assets
+
     def search(self, query: str, *, prefer_video: bool) -> list[dict[str, str]]:
         search_query = f"{query} filetype:video" if prefer_video else query
         params = {

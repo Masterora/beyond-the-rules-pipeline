@@ -182,7 +182,10 @@ class VideoRenderer:
                     "vignette=PI/5,fps=30,format=yuv420p,setsar=1"
                 )
             else:
-                inputs.extend(["-loop", "1", "-i", str(asset.local_path)])
+                # The image2 demuxer accepts ``-loop 1`` for stills, while the
+                # GIF demuxer does not. Animated GIFs are timeline media and
+                # must be looped with the generic input option instead.
+                inputs.extend(_still_input_args(asset.local_path))
                 pan = (
                     "sin(on/65)*10"
                     if (index + visual_index) % 2
@@ -394,6 +397,12 @@ def _subtitle_chunks(text: str, maximum: int = 24) -> list[str]:
         if sentence:
             chunks.append(sentence)
     return chunks or [text]
+
+
+def _still_input_args(path: Path) -> list[str]:
+    if path.suffix.lower() == ".gif":
+        return ["-stream_loop", "-1", "-i", str(path)]
+    return ["-loop", "1", "-i", str(path)]
 
 
 def _srt_time(seconds: float) -> str:

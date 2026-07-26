@@ -1,4 +1,11 @@
-from btr_pipeline.media import _srt_time, _subtitle_chunks, _wrap_thumbnail_text
+from pathlib import Path
+
+from btr_pipeline.media import (
+    _srt_time,
+    _still_input_args,
+    _subtitle_chunks,
+    _wrap_thumbnail_text,
+)
 
 
 def test_chinese_subtitles_are_readable_chunks():
@@ -15,3 +22,18 @@ def test_srt_clock():
 
 def test_thumbnail_copy_wraps_to_two_lines():
     assert _wrap_thumbnail_text("谁在为规则买单") == "谁在为规\n则买单"
+
+
+def test_animated_gif_uses_generic_stream_loop():
+    assert _still_input_args(Path("chart.gif")) == [
+        "-stream_loop",
+        "-1",
+        "-i",
+        "chart.gif",
+    ]
+    assert _still_input_args(Path("archive.jpg")) == [
+        "-loop",
+        "1",
+        "-i",
+        "archive.jpg",
+    ]
