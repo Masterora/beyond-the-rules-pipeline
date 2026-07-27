@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import json
+import os
 import re
+import shutil
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -30,6 +33,9 @@ class CommonsAssetProvider:
         self.assets_per_scene = assets_per_scene
         self._last_download_at = 0.0
         self.download_interval_seconds = 2.0
+        self.cache_dir = Path(
+            os.getenv("BTR_ASSET_CACHE_DIR", ".cache/btr-assets")
+        )
         self.session = requests.Session()
         self.session.headers.update(
             {"User-Agent": "BeyondTheRulesRightsSafeVideo/1.0 (GitHub Actions)"}
@@ -787,6 +793,14 @@ class CommonsAssetProvider:
         return ".webm" if media_type == "video" else ".jpg"
 
     def _download(self, url: str, target: Path) -> None:
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_key = hashlib.sha256(url.encode("utf-8")).hexdigest()
+        cached = self.cache_dir / f"{cache_key}{target.suffix.lower()}"
+        if cached.is_file() and 0 < cached.stat().st_size <= MAX_ASSET_BYTES:
+            shutil.copyfile(cached, target)
+            print("[visuals cache] restored verified media", flush=True)
+            return
+
         elapsed = time.monotonic() - self._last_download_at
         if elapsed < self.download_interval_seconds:
             time.sleep(self.download_interval_seconds - elapsed)
@@ -804,6 +818,9 @@ class CommonsAssetProvider:
                             f"asset exceeds {MAX_ASSET_BYTES} bytes while downloading: {url}"
                         )
                     handle.write(chunk)
+        cache_part = cached.with_suffix(cached.suffix + ".part")
+        shutil.copyfile(target, cache_part)
+        cache_part.replace(cached)
         self._last_download_at = time.monotonic()
 
     @staticmethod

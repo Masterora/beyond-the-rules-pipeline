@@ -75,6 +75,12 @@ jobs:
           key: btr-topics-${{ github.run_id }}
           restore-keys: btr-topics-
 
+      - name: Restore rights-safe media cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/btr-assets
+          key: btr-assets-v1-${{ hashFiles('stories/gold-window-assets.json') }}
+
       - name: Produce, verify, and upload
         id: production
         shell: bash

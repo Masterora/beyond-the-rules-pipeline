@@ -21,7 +21,10 @@ class Settings:
     timezone_name: str = "Asia/Shanghai"
     publish_hour: int = 19
     publish_minute: int = 30
-    min_duration_seconds: int = 420
+    # A 6.5-minute documentary is already standard long-form YouTube content.
+    # Keep the gate strict enough to reject short drafts without discarding a
+    # complete edit because synthesized speech is a few seconds faster.
+    min_duration_seconds: int = 390
     max_duration_seconds: int = 900
 
     @classmethod

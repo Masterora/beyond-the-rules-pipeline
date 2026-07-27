@@ -4,6 +4,24 @@ from btr_pipeline.assets import CommonsAssetProvider
 from btr_pipeline.models import Scene
 
 
+class _DownloadResponse:
+    def __init__(self):
+        self.headers: dict[str, str] = {}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return None
+
+    def raise_for_status(self):
+        return None
+
+    def iter_content(self, chunk_size):
+        assert chunk_size == 1024 * 1024
+        yield b"rights-safe-media"
+
+
 def test_public_domain_metadata_gets_canonical_status_url():
     assert CommonsAssetProvider._canonical_license_url("Public domain", "") == (
         "https://creativecommons.org/publicdomain/mark/1.0/"
@@ -204,3 +222,24 @@ def test_verified_manifest_resumes_without_search(monkeypatch, tmp_path):
     assert len(downloads) == 3
     assert assets[0].local_path == assets[1].local_path
     assert (tmp_path / "run" / "rights-manifest.json").exists()
+
+
+def test_verified_media_download_is_reused_from_cache(tmp_path, monkeypatch):
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("BTR_ASSET_CACHE_DIR", str(cache_dir))
+    first = CommonsAssetProvider()
+    first.download_interval_seconds = 0
+    monkeypatch.setattr(first.session, "get", lambda *_args, **_kwargs: _DownloadResponse())
+    first_target = tmp_path / "first.jpg"
+    first._download("https://upload.wikimedia.org/example.jpg", first_target)
+
+    second = CommonsAssetProvider()
+    monkeypatch.setattr(
+        second.session,
+        "get",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("network used")),
+    )
+    second_target = tmp_path / "second.jpg"
+    second._download("https://upload.wikimedia.org/example.jpg", second_target)
+
+    assert second_target.read_bytes() == b"rights-safe-media"
