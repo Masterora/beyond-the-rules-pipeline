@@ -3,20 +3,6 @@
   "assets": [
     {
       "scene_index": 0,
-      "local_path": "runs/30219886932/assets/scene-01-shot-01.webm",
-      "media_type": "video",
-      "source_url": "https://commons.wikimedia.org/wiki/File:Richard_Nixon_delivers_his_farewell_address_to_Administration_staffers,_August_9,_1974.webm",
-      "file_url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/9/91/Richard_Nixon_delivers_his_farewell_address_to_Administration_staffers%2C_August_9%2C_1974.webm/Richard_Nixon_delivers_his_farewell_address_to_Administration_staffers%2C_August_9%2C_1974.webm.480p.vp9.webm",
-      "title": "Richard Nixon delivers his farewell address to Administration staffers, August 9, 1974.webm",
-      "creator": "RichardNixonLibrary",
-      "license_name": "Public domain",
-      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "attribution": "YouTube : Richard Nixon delivers his farewell address to Administration staffers, August 9, 1974 – View/save archived versions on archive.org",
-      "provider": "Wikimedia Commons",
-      "bundled_path": "media/gold-window/43c3cdc265ccf891.mp4"
-    },
-    {
-      "scene_index": 0,
       "local_path": "runs/30219886932/assets/scene-01-shot-02.jpg",
       "media_type": "image",
       "source_url": "https://commons.wikimedia.org/wiki/File:President_Richard_Nixon_Delivering_the_1971_State_of_the_Union_Address_-_DPLA_-_af77ac0b501f280d2d4a63dbb219ab95.jpg",
@@ -170,7 +156,7 @@
       "bundled_path": "media/gold-window/95bc11a0beb3fc1b.jpg"
     },
     {
-      "scene_index": 6,
+      "scene_index": 0,
       "local_path": "runs/30219886932/assets/scene-07-shot-01.jpg",
       "media_type": "image",
       "source_url": "https://commons.wikimedia.org/wiki/File:Gold_bullion_bars.jpg",

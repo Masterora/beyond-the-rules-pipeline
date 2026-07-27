@@ -1,11 +1,13 @@
 from pathlib import Path
 
 from btr_pipeline.media import (
+    _select_thumbnail_asset,
     _srt_time,
     _still_input_args,
     _subtitle_chunks,
     _wrap_thumbnail_text,
 )
+from btr_pipeline.models import VisualAsset
 
 
 def test_chinese_subtitles_are_readable_chunks():
@@ -37,3 +39,26 @@ def test_animated_gif_uses_generic_stream_loop():
         "-i",
         "archive.jpg",
     ]
+
+
+def test_thumbnail_prefers_named_rights_safe_subject():
+    def asset(title):
+        return VisualAsset(
+            0,
+            Path("asset.jpg"),
+            "image",
+            "https://commons.example/source",
+            "https://commons.example/file",
+            title,
+            "Archivist",
+            "CC0",
+            "https://creativecommons.org/publicdomain/zero/1.0/",
+            "Archivist",
+        )
+
+    generic = asset("Generic archive")
+    gold = asset("Gold bullion bars")
+
+    assert _select_thumbnail_asset(
+        [generic, gold], preferred=("gold bullion bars",)
+    ) is gold

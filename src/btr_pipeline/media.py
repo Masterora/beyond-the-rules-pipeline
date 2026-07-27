@@ -153,7 +153,7 @@ class VideoRenderer:
         print("[render] burning mobile-safe subtitles into publish master", flush=True)
         self._burn_subtitles(clean, captions, subtitled)
         thumbnail = self.run_dir / "thumbnail.jpg"
-        self._make_thumbnail(story, assets[0], thumbnail)
+        self._make_thumbnail(story, assets, thumbnail)
         return {
             "clean": clean,
             "subtitled": subtitled,
@@ -339,7 +339,41 @@ class VideoRenderer:
             cwd=self.run_dir,
         )
 
-    def _make_thumbnail(self, story: Story, asset: VisualAsset, target: Path) -> None:
+    def _make_thumbnail(
+        self, story: Story, assets: list[VisualAsset], target: Path
+    ) -> None:
+        background = _select_thumbnail_asset(
+            assets, preferred=("gold bullion bars", "gold bars")
+        )
+        subject = _select_thumbnail_asset(
+            assets, preferred=("nixon official presidential portrait",)
+        )
+        image = self._thumbnail_frame(background)
+        if subject is not background:
+            portrait = _cover(self._thumbnail_frame(subject), 560, 720)
+            image.paste(portrait, (720, 0))
+
+        overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+        for x in range(860):
+            alpha = int(235 * (1 - x / 860) ** 1.65)
+            draw.line((x, 0, x, 720), fill=(5, 9, 14, alpha))
+        draw.rectangle((62, 82, 82, 180), fill=(232, 55, 43, 255))
+        font = _find_font(96)
+        text = _wrap_thumbnail_text(story.thumbnail_text)
+        draw.multiline_text(
+            (112, 210),
+            text,
+            font=font,
+            fill=(255, 248, 235, 255),
+            spacing=14,
+            stroke_width=2,
+            stroke_fill=(0, 0, 0, 180),
+        )
+        result = Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
+        result.save(target, "JPEG", quality=94, optimize=True)
+
+    def _thumbnail_frame(self, asset: VisualAsset) -> Image.Image:
         base_path = asset.local_path
         extracted = self.run_dir / "thumbnail-base.jpg"
         if asset.media_type == "video":
@@ -360,26 +394,8 @@ class VideoRenderer:
         with Image.open(base_path) as source:
             image = source.convert("RGB")
             image = _cover(image, 1280, 720).filter(ImageFilter.GaussianBlur(0.3))
-        overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(overlay)
-        for x in range(780):
-            alpha = int(230 * (1 - x / 780) ** 1.8)
-            draw.line((x, 0, x, 720), fill=(5, 9, 14, alpha))
-        draw.rectangle((62, 82, 82, 180), fill=(232, 55, 43, 255))
-        font = _find_font(96)
-        text = _wrap_thumbnail_text(story.thumbnail_text)
-        draw.multiline_text(
-            (112, 210),
-            text,
-            font=font,
-            fill=(255, 248, 235, 255),
-            spacing=14,
-            stroke_width=2,
-            stroke_fill=(0, 0, 0, 180),
-        )
-        result = Image.alpha_composite(image.convert("RGBA"), overlay).convert("RGB")
-        result.save(target, "JPEG", quality=94, optimize=True)
         extracted.unlink(missing_ok=True)
+        return image
 
 
 def _subtitle_chunks(text: str, maximum: int = 24) -> list[str]:
@@ -424,15 +440,27 @@ def _cover(image: Image.Image, width: int, height: int) -> Image.Image:
     return resized.crop((left, top, left + width, top + height))
 
 
+def _select_thumbnail_asset(
+    assets: list[VisualAsset], *, preferred: tuple[str, ...]
+) -> VisualAsset:
+    for phrase in preferred:
+        for asset in assets:
+            if asset.media_type == "image" and phrase in asset.title.lower():
+                return asset
+    return next((asset for asset in assets if asset.media_type == "image"), assets[0])
+
+
 def _find_font(size: int) -> ImageFont.FreeTypeFont:
     candidates = [
-        "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-        "/System/Library/Fonts/PingFang.ttc",
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", 2),
+        ("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 2),
+        ("/System/Library/Fonts/PingFang.ttc", 2),
+        ("/System/Library/Fonts/Hiragino Sans GB.ttc", 0),
+        ("/System/Library/Fonts/STHeiti Medium.ttc", 0),
     ]
-    for candidate in candidates:
+    for candidate, index in candidates:
         if Path(candidate).exists():
-            return ImageFont.truetype(candidate, size=size, index=2)
+            return ImageFont.truetype(candidate, size=size, index=index)
     raise RuntimeError("No CJK font found; install fonts-noto-cjk")
 
 

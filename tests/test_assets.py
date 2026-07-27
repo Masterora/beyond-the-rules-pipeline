@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from btr_pipeline.assets import CommonsAssetProvider
 from btr_pipeline.models import Scene
@@ -278,3 +279,20 @@ def test_prepared_manifest_can_restore_bundled_verified_media(tmp_path, monkeypa
 
     assert len(assets) == 2
     assert assets[0].local_path.read_bytes() == b"bundled-rights-safe-media"
+
+
+def test_gold_window_opens_with_event_relevant_rights_safe_media():
+    manifest = json.loads(
+        Path("stories/gold-window-assets.json").read_text(encoding="utf-8")
+    )
+    opening = [item for item in manifest["assets"] if item["scene_index"] == 0]
+    titles = " ".join(item["title"].lower() for item in opening)
+
+    assert len(opening) >= 2
+    assert "gold bullion" in titles
+    assert "1971" in titles
+    assert "farewell" not in titles
+    assert all(
+        item["license_name"].lower() in {"public domain", "cc0"}
+        for item in opening
+    )
