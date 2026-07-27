@@ -81,7 +81,6 @@ class YouTubeUploader:
         print("[upload 2/2] sending subtitled publish master as private", flush=True)
         receipt = self._resumable_upload(token, video_path, metadata)
         video_id = str(receipt["id"])
-        thumbnail_receipt = self._upload_thumbnail(token, video_id, thumbnail_path)
         result: dict[str, object] = {
             "video_id": video_id,
             "watch_url": f"https://www.youtube.com/watch?v={video_id}",
@@ -96,9 +95,37 @@ class YouTubeUploader:
                 "privacy_status": "private",
             },
             "api_response": receipt,
-            "thumbnail_response": thumbnail_receipt,
+            "thumbnail_response": None,
         }
-        (run_dir / "upload-receipt.json").write_text(
+        receipt_path = run_dir / "upload-receipt.json"
+        # Persist both video IDs before the optional thumbnail call. Some new
+        # channels cannot use custom thumbnails until feature eligibility is
+        # enabled; that must not erase successful private upload evidence.
+        receipt_path.write_text(
+            json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        try:
+            result["thumbnail_response"] = self._upload_thumbnail(
+                token, video_id, thumbnail_path
+            )
+        except requests.HTTPError as exc:
+            response = exc.response
+            warning: dict[str, object] = {
+                "status": "warning",
+                "http_status": response.status_code if response is not None else None,
+                "reason": "custom thumbnail was not accepted; video uploads succeeded",
+            }
+            if response is not None:
+                try:
+                    warning["api_error"] = response.json().get("error", {})
+                except ValueError:
+                    warning["api_error"] = response.text[:1000]
+            result["thumbnail_response"] = warning
+            print(
+                "[thumbnail warning] custom thumbnail unavailable; uploads retained",
+                flush=True,
+            )
+        receipt_path.write_text(
             json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         return result
