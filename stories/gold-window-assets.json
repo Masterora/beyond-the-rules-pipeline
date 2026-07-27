@@ -184,6 +184,19 @@
       "bundled_path": "media/gold-window/3148089c2a560f7b.jpg"
     },
     {
+      "scene_index": 6,
+      "media_type": "image",
+      "source_url": "https://commons.wikimedia.org/wiki/File:West_Point_gold.jpg",
+      "file_url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/West_Point_gold.jpg",
+      "title": "West Point gold.jpg",
+      "creator": "U.S. Mint",
+      "license_name": "Public domain",
+      "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "Gold bars in storage at West Point Mint",
+      "provider": "Wikimedia Commons",
+      "bundled_path": "media/gold-window/73a6b14efb0be095.jpg"
+    },
+    {
       "scene_index": 7,
       "local_path": "runs/30219886932/assets/scene-08-shot-01.jpg",
       "media_type": "image",
