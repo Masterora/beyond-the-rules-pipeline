@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from pathlib import Path
 
 from btr_pipeline.assets import CommonsAssetProvider
@@ -296,3 +297,7 @@ def test_gold_window_opens_with_event_relevant_rights_safe_media():
         item["license_name"].lower() in {"public domain", "cc0"}
         for item in opening
     )
+
+    cuts_per_scene = Counter(item["scene_index"] for item in manifest["assets"])
+    assert set(cuts_per_scene.values()) == {2}
+    assert sum(item["media_type"] == "video" for item in manifest["assets"]) >= 3

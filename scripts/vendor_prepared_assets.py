@@ -60,11 +60,13 @@ def _prepare_image(source: Path, target: Path) -> None:
         rgb.save(target, format="JPEG", quality=90, optimize=True, progressive=True)
 
 
-def _prepare_video(source: Path, target: Path) -> None:
+def _prepare_video(source: Path, target: Path, *, start_time: float = 0) -> None:
+    seek = ["-ss", f"{start_time:.3f}"] if start_time > 0 else []
     completed = subprocess.run(
         [
             os.getenv("BTR_FFMPEG", "ffmpeg"),
             "-y",
+            *seek,
             "-i",
             str(source),
             "-t",
@@ -99,32 +101,45 @@ def vendor(manifest_path: Path, output_dir: Path) -> None:
     if not isinstance(assets, list):
         raise TypeError("manifest must contain an assets list")
     output_dir.mkdir(parents=True, exist_ok=True)
-    prepared: dict[str, str] = {}
+    prepared: dict[tuple[str, float], str] = {}
     session = _session()
-    unique_count = len({str(asset["file_url"]) for asset in assets})
+    unique_count = len(
+        {
+            (str(asset["file_url"]), float(asset.get("start_time", 0)))
+            for asset in assets
+        }
+    )
     with tempfile.TemporaryDirectory(prefix="btr-vendor-") as temp_name:
         temp_dir = Path(temp_name)
         for asset in assets:
             url = str(asset["file_url"])
-            bundled = prepared.get(url)
+            start_time = float(asset.get("start_time", 0))
+            signature = (url, start_time)
+            bundled = prepared.get(signature)
             if bundled is None:
                 index = len(prepared) + 1
                 media_type = str(asset["media_type"])
                 extension = ".mp4" if media_type == "video" else ".jpg"
-                filename = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16] + extension
+                digest_input = (
+                    url if start_time <= 0 else f"{url}#start={start_time:.3f}"
+                )
+                filename = (
+                    hashlib.sha256(digest_input.encode("utf-8")).hexdigest()[:16]
+                    + extension
+                )
                 target = output_dir / filename
                 if not target.is_file():
                     raw = temp_dir / (filename + ".source")
                     print(f"[{index}/{unique_count}] downloading verified {media_type}")
                     _download(session, url, raw)
                     if media_type == "video":
-                        _prepare_video(raw, target)
+                        _prepare_video(raw, target, start_time=start_time)
                     elif media_type == "image":
                         _prepare_image(raw, target)
                     else:
                         raise RuntimeError(f"unsupported media type: {media_type}")
                 bundled = target.as_posix()
-                prepared[url] = bundled
+                prepared[signature] = bundled
             asset["bundled_path"] = bundled
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

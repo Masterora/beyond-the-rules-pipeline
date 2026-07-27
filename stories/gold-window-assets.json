@@ -185,16 +185,17 @@
     },
     {
       "scene_index": 6,
-      "media_type": "image",
-      "source_url": "https://commons.wikimedia.org/wiki/File:West_Point_gold.jpg",
-      "file_url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/West_Point_gold.jpg",
-      "title": "West Point gold.jpg",
-      "creator": "U.S. Mint",
+      "media_type": "video",
+      "source_url": "https://commons.wikimedia.org/wiki/File:West_Point_Quarters_B-Roll.webm",
+      "file_url": "https://upload.wikimedia.org/wikipedia/commons/5/5d/West_Point_Quarters_B-Roll.webm",
+      "title": "West Point Quarters B-Roll.webm",
+      "creator": "USMINT",
       "license_name": "Public domain",
       "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
-      "attribution": "Gold bars in storage at West Point Mint",
+      "attribution": "Production of circulating quarters at the West Point Mint",
       "provider": "Wikimedia Commons",
-      "bundled_path": "media/gold-window/73a6b14efb0be095.jpg"
+      "start_time": 2.0,
+      "bundled_path": "media/gold-window/329325b8e9b7492b.mp4"
     },
     {
       "scene_index": 7,
