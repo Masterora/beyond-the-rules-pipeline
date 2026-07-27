@@ -243,3 +243,38 @@ def test_verified_media_download_is_reused_from_cache(tmp_path, monkeypatch):
     second._download("https://upload.wikimedia.org/example.jpg", second_target)
 
     assert second_target.read_bytes() == b"rights-safe-media"
+
+
+def test_prepared_manifest_can_restore_bundled_verified_media(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    bundled = tmp_path / "media" / "example.jpg"
+    bundled.parent.mkdir()
+    bundled.write_bytes(b"bundled-rights-safe-media")
+    scene = Scene("one", "n" * 100, "gold one", ["https://a"])
+    base = {
+        "scene_index": 0,
+        "media_type": "image",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Gold.jpg",
+        "file_url": "https://upload.wikimedia.org/gold.jpg",
+        "bundled_path": "media/example.jpg",
+        "title": "Gold.jpg",
+        "creator": "Archivist",
+        "license_name": "CC0",
+        "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "attribution": "Own work",
+    }
+    manifest = tmp_path / "assets.json"
+    manifest.write_text(
+        json.dumps({"assets": [base, base]}), encoding="utf-8"
+    )
+    provider = CommonsAssetProvider()
+    monkeypatch.setattr(
+        provider,
+        "_download",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("network used")),
+    )
+
+    assets = provider.collect_from_manifest(manifest, [scene], tmp_path / "run")
+
+    assert len(assets) == 2
+    assert assets[0].local_path.read_bytes() == b"bundled-rights-safe-media"

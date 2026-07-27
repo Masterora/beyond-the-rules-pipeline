@@ -229,16 +229,27 @@ class CommonsAssetProvider:
             media_type = str(item["media_type"])
             local_path = downloaded.get(file_url)
             if local_path is None:
-                suffix = self._suffix(file_url, media_type)
+                bundled_path = str(item.get("bundled_path", "")).strip()
+                suffix_source = bundled_path or file_url
+                suffix = self._suffix(suffix_source, media_type)
                 local_path = asset_dir / (
                     f"scene-{scene_index + 1:02d}-shot-{shot_index:02d}{suffix}"
                 )
-                print(
-                    f"[visuals resume {len(assets) + 1}/{expected}] downloading "
-                    f"verified {media_type}",
-                    flush=True,
-                )
-                self._download(file_url, local_path)
+                if bundled_path:
+                    source_path = self._resolve_bundled_path(bundled_path)
+                    shutil.copyfile(source_path, local_path)
+                    print(
+                        f"[visuals resume {len(assets) + 1}/{expected}] restored "
+                        f"bundled verified {media_type}",
+                        flush=True,
+                    )
+                else:
+                    print(
+                        f"[visuals resume {len(assets) + 1}/{expected}] downloading "
+                        f"verified {media_type}",
+                        flush=True,
+                    )
+                    self._download(file_url, local_path)
                 downloaded[file_url] = local_path
             asset = VisualAsset(
                 scene_index=scene_index,
@@ -791,6 +802,16 @@ class CommonsAssetProvider:
         if suffix and len(suffix) <= 6:
             return suffix
         return ".webm" if media_type == "video" else ".jpg"
+
+    @staticmethod
+    def _resolve_bundled_path(value: str) -> Path:
+        root = Path.cwd().resolve()
+        candidate = (root / value).resolve()
+        if candidate == root or not candidate.is_relative_to(root):
+            raise RuntimeError("bundled asset path escapes the repository")
+        if not candidate.is_file():
+            raise RuntimeError(f"bundled asset is missing: {value}")
+        return candidate
 
     def _download(self, url: str, target: Path) -> None:
         self.cache_dir.mkdir(parents=True, exist_ok=True)

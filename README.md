@@ -26,6 +26,11 @@ the repository variable `YOUTUBE_PUBLIC_UPLOAD_ENABLED` is explicitly set to
 `true`. Public Actions artifacts contain evidence and metadata, never unpublished
 video or raw source media.
 
+The lightweight derivatives in `media/gold-window/` are reproducible copies of
+the Public Domain, CC0, and CC BY sources recorded in
+`stories/gold-window-assets.json`. Original source pages, creators, licenses,
+and attribution remain authoritative and are carried into the video description.
+
 ## Required repository secrets
 
 | Secret | Purpose |
